@@ -1,0 +1,302 @@
+<div class="page-header">
+    <h1 class="page-title">إدارة المعدات</h1>
+    <p class="page-subtitle">تتبع وإدارة جميع المعدات في النادي</p>
+    <div class="header-actions">
+        <button class="btn btn-primary" id="addEquipmentBtn">
+            <i class="fas fa-plus-circle"></i>
+            إضافة معدة جديدة
+        </button>
+        <button class="btn btn-secondary" id="exportEquipmentBtn">
+            <i class="fas fa-download"></i>
+            تصدير المعدات
+        </button>
+    </div>
+</div>
+
+<div class="equipment-table-container">
+    <div class="table-header">
+        <div class="search-filter">
+            <input type="text" id="equipmentSearch" placeholder="البحث عن معدة..." class="search-input">
+            <select id="equipmentFilter" class="filter-select">
+                <option value="all">جميع المعدات</option>
+                <option value="operational">قيد التشغيل</option>
+                <option value="maintenance">تحت الصيانة</option>
+                <option value="broken">معطلة</option>
+            </select>
+        </div>
+    </div>
+    <table class="equipment-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>اسم المعدة</th>
+                <th>النوع</th>
+                <th>تاريخ الشراء</th>
+                <th>الحالة</th>
+                <th>آخر صيانة</th>
+                <th>الإجراءات</th>
+            </tr>
+        </thead>
+        <tbody id="equipmentTableBody">
+            <!-- سيتم ملء بيانات المعدات هنا -->
+        </tbody>
+    </table>
+    <div class="pagination">
+        <button class="btn btn-secondary" id="prevEquipmentPageBtn"><i class="fas fa-chevron-right"></i> السابق</button>
+        <span id="equipmentPageInfo">الصفحة 1 من 1</span>
+        <button class="btn btn-secondary" id="nextEquipmentPageBtn">التالي <i class="fas fa-chevron-left"></i></button>
+    </div>
+</div>
+
+<!-- نافذة منبثقة لإضافة/تعديل معدة -->
+<div class="modal" id="equipmentModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>إضافة/تعديل معدة</h3>
+            <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="equipmentForm">
+                <div class="form-group">
+                    <label for="equipmentName">اسم المعدة:</label>
+                    <input type="text" id="equipmentName" required>
+                </div>
+                <div class="form-group">
+                    <label for="equipmentType">النوع:</label>
+                    <input type="text" id="equipmentType">
+                </div>
+                <div class="form-group">
+                    <label for="purchaseDate">تاريخ الشراء:</label>
+                    <input type="date" id="purchaseDate">
+                </div>
+                <div class="form-group">
+                    <label for="equipmentStatus">الحالة:</label>
+                    <select id="equipmentStatus">
+                        <option value="operational">قيد التشغيل</option>
+                        <option value="maintenance">تحت الصيانة</option>
+                        <option value="broken">معطلة</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="lastMaintenance">آخر صيانة:</label>
+                    <input type="date" id="lastMaintenance">
+                </div>
+                <button type="submit" class="btn btn-primary">حفظ</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .equipment-table-container {
+        background: var(--white);
+        border-radius: var(--border-radius-xl);
+        padding: var(--spacing-6);
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--gray-200);
+        margin-top: var(--spacing-6);
+    }
+
+    .table-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-4);
+    }
+
+    .search-filter {
+        display: flex;
+        gap: var(--spacing-3);
+    }
+
+    .search-input,
+    .filter-select {
+        padding: var(--spacing-2) var(--spacing-3);
+        border: 1px solid var(--gray-300);
+        border-radius: var(--border-radius-md);
+        font-size: var(--font-size-sm);
+    }
+
+    .equipment-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: var(--spacing-4);
+    }
+
+    .equipment-table th,
+    .equipment-table td {
+        padding: var(--spacing-3);
+        text-align: right;
+        border-bottom: 1px solid var(--gray-200);
+    }
+
+    .equipment-table th {
+        background-color: var(--gray-100);
+        font-weight: 600;
+        color: var(--gray-700);
+    }
+
+    .equipment-table tbody tr:hover {
+        background-color: var(--gray-50);
+    }
+
+    .status-badge {
+        padding: 4px 8px;
+        border-radius: var(--border-radius-full);
+        font-size: var(--font-size-xs);
+        font-weight: 600;
+    }
+
+    .status-badge.operational {
+        background-color: var(--success-light);
+        color: var(--success-color);
+    }
+
+    .status-badge.maintenance {
+        background-color: var(--warning-light);
+        color: var(--warning-color);
+    }
+
+    .status-badge.broken {
+        background-color: var(--error-light);
+        color: var(--error-color);
+    }
+
+    .action-buttons .btn {
+        padding: 6px 10px;
+        font-size: var(--font-size-xs);
+        margin-left: var(--spacing-2);
+    }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: var(--spacing-4);
+    }
+
+    .pagination .btn {
+        padding: var(--spacing-2) var(--spacing-4);
+    }
+
+    .form-group {
+        margin-bottom: var(--spacing-4);
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: var(--spacing-2);
+        font-weight: 500;
+        color: var(--gray-700);
+    }
+
+    .form-group input,
+    .form-group select {
+        width: 100%;
+        padding: var(--spacing-3);
+        border: 1px solid var(--gray-300);
+        border-radius: var(--border-radius-md);
+        font-size: var(--font-size-base);
+    }
+</style>
+
+<script>
+    // JavaScript for equipment page functionality
+    document.addEventListener("DOMContentLoaded", () => {
+        const equipmentTableBody = document.getElementById("equipmentTableBody");
+        const addEquipmentBtn = document.getElementById("addEquipmentBtn");
+        const equipmentModal = document.getElementById("equipmentModal");
+        const equipmentForm = document.getElementById("equipmentForm");
+        const modalCloseBtn = equipmentModal.querySelector(".modal-close");
+
+        let equipment = [
+            { id: 1, name: "جهاز المشي", type: "كارديو", purchaseDate: "2023-01-01", status: "operational", lastMaintenance: "2024-07-01" },
+            { id: 2, name: "جهاز التجديف", type: "كارديو", purchaseDate: "2023-03-10", status: "operational", lastMaintenance: "2024-06-15" },
+            { id: 3, name: "جهاز رفع الأثقال", type: "قوة", purchaseDate: "2022-11-01", status: "maintenance", lastMaintenance: "2024-08-01" }
+        ];
+
+        function renderEquipment() {
+            equipmentTableBody.innerHTML = "";
+            equipment.forEach(item => {
+                const row = equipmentTableBody.insertRow();
+                row.innerHTML = `
+                    <td>${item.id}</td>
+                    <td>${item.name}</td>
+                    <td>${item.type}</td>
+                    <td>${item.purchaseDate}</td>
+                    <td><span class="status-badge ${item.status}">${item.status === 'operational' ? 'قيد التشغيل' : (item.status === 'maintenance' ? 'تحت الصيانة' : 'معطلة')}</span></td>
+                    <td>${item.lastMaintenance}</td>
+                    <td class="action-buttons">
+                        <button class="btn btn-info edit-btn" data-id="${item.id}"><i class="fas fa-edit"></i> تعديل</button>
+                        <button class="btn btn-error delete-btn" data-id="${item.id}"><i class="fas fa-trash"></i> حذف</button>
+                    </td>
+                `;
+            });
+            addEventListenersToButtons();
+        }
+
+        function addEventListenersToButtons() {
+            document.querySelectorAll(".edit-btn").forEach(button => {
+                button.addEventListener("click", (e) => {
+                    const equipmentId = parseInt(e.currentTarget.dataset.id);
+                    const equipmentToEdit = equipment.find(eq => eq.id === equipmentId);
+                    if (equipmentToEdit) {
+                        document.getElementById("equipmentName").value = equipmentToEdit.name;
+                        document.getElementById("equipmentType").value = equipmentToEdit.type;
+                        document.getElementById("purchaseDate").value = equipmentToEdit.purchaseDate;
+                        document.getElementById("equipmentStatus").value = equipmentToEdit.status;
+                        document.getElementById("lastMaintenance").value = equipmentToEdit.lastMaintenance;
+                        equipmentModal.dataset.editId = equipmentId;
+                        equipmentModal.classList.add("show");
+                    }
+                });
+            });
+
+            document.querySelectorAll(".delete-btn").forEach(button => {
+                button.addEventListener("click", (e) => {
+                    const equipmentId = parseInt(e.currentTarget.dataset.id);
+                    if (confirm("هل أنت متأكد من حذف هذه المعدة؟")) {
+                        equipment = equipment.filter(eq => eq.id !== equipmentId);
+                        renderEquipment();
+                        // Optionally, send delete request to backend
+                    }
+                });
+            });
+        }
+
+        addEquipmentBtn.addEventListener("click", () => {
+            equipmentForm.reset();
+            delete equipmentModal.dataset.editId;
+            equipmentModal.classList.add("show");
+        });
+
+        modalCloseBtn.addEventListener("click", () => {
+            equipmentModal.classList.remove("show");
+        });
+
+        equipmentForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const newEquipment = {
+                name: document.getElementById("equipmentName").value,
+                type: document.getElementById("equipmentType").value,
+                purchaseDate: document.getElementById("purchaseDate").value,
+                status: document.getElementById("equipmentStatus").value,
+                lastMaintenance: document.getElementById("lastMaintenance").value
+            };
+
+            const editId = equipmentModal.dataset.editId;
+            if (editId) {
+                equipment = equipment.map(eq => eq.id === parseInt(editId) ? { ...eq, ...newEquipment } : eq);
+            } else {
+                newEquipment.id = equipment.length > 0 ? Math.max(...equipment.map(eq => eq.id)) + 1 : 1;
+                equipment.push(newEquipment);
+            }
+            renderEquipment();
+            equipmentModal.classList.remove("show");
+            // Optionally, send data to backend
+        });
+
+        renderEquipment();
+    });
+</script>
+

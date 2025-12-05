@@ -1,0 +1,295 @@
+<div class="page-header">
+    <h1 class="page-title">إدارة المدربين</h1>
+    <p class="page-subtitle">إدارة شاملة لجميع المدربين في النادي</p>
+    <div class="header-actions">
+        <button class="btn btn-primary" id="addTrainerBtn">
+            <i class="fas fa-user-plus"></i>
+            إضافة مدرب جديد
+        </button>
+        <button class="btn btn-secondary" id="exportTrainersBtn">
+            <i class="fas fa-download"></i>
+            تصدير المدربين
+        </button>
+    </div>
+</div>
+
+<div class="trainers-table-container">
+    <div class="table-header">
+        <div class="search-filter">
+            <input type="text" id="trainersSearch" placeholder="البحث عن مدرب..." class="search-input">
+            <select id="trainersFilter" class="filter-select">
+                <option value="all">جميع المدربين</option>
+                <option value="active">المدربون النشطون</option>
+                <option value="inactive">المدربون غير النشطين</option>
+            </select>
+        </div>
+    </div>
+    <table class="trainers-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>الاسم</th>
+                <th>البريد الإلكتروني</th>
+                <th>رقم الهاتف</th>
+                <th>التخصص</th>
+                <th>الحالة</th>
+                <th>الإجراءات</th>
+            </tr>
+        </thead>
+        <tbody id="trainersTableBody">
+            <!-- سيتم ملء بيانات المدربين هنا -->
+        </tbody>
+    </table>
+    <div class="pagination">
+        <button class="btn btn-secondary" id="prevTrainerPageBtn"><i class="fas fa-chevron-right"></i> السابق</button>
+        <span id="trainerPageInfo">الصفحة 1 من 1</span>
+        <button class="btn btn-secondary" id="nextTrainerPageBtn">التالي <i class="fas fa-chevron-left"></i></button>
+    </div>
+</div>
+
+<!-- نافذة منبثقة لإضافة/تعديل مدرب -->
+<div class="modal" id="trainerModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>إضافة/تعديل مدرب</h3>
+            <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="trainerForm">
+                <div class="form-group">
+                    <label for="trainerName">الاسم الكامل:</label>
+                    <input type="text" id="trainerName" required>
+                </div>
+                <div class="form-group">
+                    <label for="trainerEmail">البريد الإلكتروني:</label>
+                    <input type="email" id="trainerEmail">
+                </div>
+                <div class="form-group">
+                    <label for="trainerPhone">رقم الهاتف:</label>
+                    <input type="tel" id="trainerPhone">
+                </div>
+                <div class="form-group">
+                    <label for="trainerSpecialty">التخصص:</label>
+                    <input type="text" id="trainerSpecialty">
+                </div>
+                <div class="form-group">
+                    <label for="trainerStatus">الحالة:</label>
+                    <select id="trainerStatus">
+                        <option value="active">نشط</option>
+                        <option value="inactive">غير نشط</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">حفظ</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .trainers-table-container {
+        background: var(--white);
+        border-radius: var(--border-radius-xl);
+        padding: var(--spacing-6);
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--gray-200);
+        margin-top: var(--spacing-6);
+    }
+
+    .table-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-4);
+    }
+
+    .search-filter {
+        display: flex;
+        gap: var(--spacing-3);
+    }
+
+    .search-input,
+    .filter-select {
+        padding: var(--spacing-2) var(--spacing-3);
+        border: 1px solid var(--gray-300);
+        border-radius: var(--border-radius-md);
+        font-size: var(--font-size-sm);
+    }
+
+    .trainers-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: var(--spacing-4);
+    }
+
+    .trainers-table th,
+    .trainers-table td {
+        padding: var(--spacing-3);
+        text-align: right;
+        border-bottom: 1px solid var(--gray-200);
+    }
+
+    .trainers-table th {
+        background-color: var(--gray-100);
+        font-weight: 600;
+        color: var(--gray-700);
+    }
+
+    .trainers-table tbody tr:hover {
+        background-color: var(--gray-50);
+    }
+
+    .status-badge {
+        padding: 4px 8px;
+        border-radius: var(--border-radius-full);
+        font-size: var(--font-size-xs);
+        font-weight: 600;
+    }
+
+    .status-badge.active {
+        background-color: var(--success-light);
+        color: var(--success-color);
+    }
+
+    .status-badge.inactive {
+        background-color: var(--error-light);
+        color: var(--error-color);
+    }
+
+    .action-buttons .btn {
+        padding: 6px 10px;
+        font-size: var(--font-size-xs);
+        margin-left: var(--spacing-2);
+    }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: var(--spacing-4);
+    }
+
+    .pagination .btn {
+        padding: var(--spacing-2) var(--spacing-4);
+    }
+
+    .form-group {
+        margin-bottom: var(--spacing-4);
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: var(--spacing-2);
+        font-weight: 500;
+        color: var(--gray-700);
+    }
+
+    .form-group input,
+    .form-group select {
+        width: 100%;
+        padding: var(--spacing-3);
+        border: 1px solid var(--gray-300);
+        border-radius: var(--border-radius-md);
+        font-size: var(--font-size-base);
+    }
+</style>
+
+<script>
+    // JavaScript for trainers page functionality
+    document.addEventListener("DOMContentLoaded", () => {
+        const trainersTableBody = document.getElementById("trainersTableBody");
+        const addTrainerBtn = document.getElementById("addTrainerBtn");
+        const trainerModal = document.getElementById("trainerModal");
+        const trainerForm = document.getElementById("trainerForm");
+        const modalCloseBtn = trainerModal.querySelector(".modal-close");
+
+        let trainers = [
+            { id: 1, name: "محمد علي", email: "mohamed@example.com", phone: "0501112233", specialty: "كمال أجسام", status: "active" },
+            { id: 2, name: "سارة أحمد", email: "sara@example.com", phone: "0554445566", specialty: "يوغا", status: "active" },
+            { id: 3, name: "خالد محمود", email: "khalid@example.com", phone: "0567778899", specialty: "لياقة بدنية", status: "inactive" }
+        ];
+
+        function renderTrainers() {
+            trainersTableBody.innerHTML = "";
+            trainers.forEach(trainer => {
+                const row = trainersTableBody.insertRow();
+                row.innerHTML = `
+                    <td>${trainer.id}</td>
+                    <td>${trainer.name}</td>
+                    <td>${trainer.email}</td>
+                    <td>${trainer.phone}</td>
+                    <td>${trainer.specialty}</td>
+                    <td><span class="status-badge ${trainer.status}">${trainer.status === 'active' ? 'نشط' : 'غير نشط'}</span></td>
+                    <td class="action-buttons">
+                        <button class="btn btn-info edit-btn" data-id="${trainer.id}"><i class="fas fa-edit"></i> تعديل</button>
+                        <button class="btn btn-error delete-btn" data-id="${trainer.id}"><i class="fas fa-trash"></i> حذف</button>
+                    </td>
+                `;
+            });
+            addEventListenersToButtons();
+        }
+
+        function addEventListenersToButtons() {
+            document.querySelectorAll(".edit-btn").forEach(button => {
+                button.addEventListener("click", (e) => {
+                    const trainerId = parseInt(e.currentTarget.dataset.id);
+                    const trainerToEdit = trainers.find(t => t.id === trainerId);
+                    if (trainerToEdit) {
+                        document.getElementById("trainerName").value = trainerToEdit.name;
+                        document.getElementById("trainerEmail").value = trainerToEdit.email;
+                        document.getElementById("trainerPhone").value = trainerToEdit.phone;
+                        document.getElementById("trainerSpecialty").value = trainerToEdit.specialty;
+                        document.getElementById("trainerStatus").value = trainerToEdit.status;
+                        trainerModal.dataset.editId = trainerId;
+                        trainerModal.classList.add("show");
+                    }
+                });
+            });
+
+            document.querySelectorAll(".delete-btn").forEach(button => {
+                button.addEventListener("click", (e) => {
+                    const trainerId = parseInt(e.currentTarget.dataset.id);
+                    if (confirm("هل أنت متأكد من حذف هذا المدرب؟")) {
+                        trainers = trainers.filter(t => t.id !== trainerId);
+                        renderTrainers();
+                        // Optionally, send delete request to backend
+                    }
+                });
+            });
+        }
+
+        addTrainerBtn.addEventListener("click", () => {
+            trainerForm.reset();
+            delete trainerModal.dataset.editId;
+            trainerModal.classList.add("show");
+        });
+
+        modalCloseBtn.addEventListener("click", () => {
+            trainerModal.classList.remove("show");
+        });
+
+        trainerForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const newTrainer = {
+                name: document.getElementById("trainerName").value,
+                email: document.getElementById("trainerEmail").value,
+                phone: document.getElementById("trainerPhone").value,
+                specialty: document.getElementById("trainerSpecialty").value,
+                status: document.getElementById("trainerStatus").value
+            };
+
+            const editId = trainerModal.dataset.editId;
+            if (editId) {
+                trainers = trainers.map(t => t.id === parseInt(editId) ? { ...t, ...newTrainer } : t);
+            } else {
+                newTrainer.id = trainers.length > 0 ? Math.max(...trainers.map(t => t.id)) + 1 : 1;
+                trainers.push(newTrainer);
+            }
+            renderTrainers();
+            trainerModal.classList.remove("show");
+            // Optionally, send data to backend
+        });
+
+        renderTrainers();
+    });
+</script>
+

@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام الإشعارات - نظام إدارة الجيم المتطور</title>
+    <link rel="stylesheet" href="../styles/improved_dashboard.css">
+    <link rel="stylesheet" href="../styles/notifications.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="notifications-container">
+        <!-- Header -->
+        <div class="page-header">
+            <div class="header-content">
+                <h1>نظام الإشعارات</h1>
+                <p>إدارة وتتبع جميع الإشعارات والتنبيهات</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-primary" id="createNotificationBtn">
+                    <i class="fas fa-plus"></i>
+                    إنشاء إشعار جديد
+                </button>
+                <button class="btn btn-secondary" id="markAllReadBtn">
+                    <i class="fas fa-check-double"></i>
+                    تحديد الكل كمقروء
+                </button>
+                <button class="btn btn-outline" id="notificationSettingsBtn">
+                    <i class="fas fa-cog"></i>
+                    إعدادات الإشعارات
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-icon primary">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 id="totalNotifications">0</h3>
+                    <p>إجمالي الإشعارات</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon warning">
+                    <i class="fas fa-bell-slash"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 id="unreadNotifications">0</h3>
+                    <p>الإشعارات غير المقروءة</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon success">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 id="readNotifications">0</h3>
+                    <p>الإشعارات المقروءة</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon info">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 id="todayNotifications">0</h3>
+                    <p>إشعارات اليوم</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters and Search -->
+        <div class="filters-section">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="البحث في الإشعارات...">
+            </div>
+            <div class="filters">
+                <select id="typeFilter" class="filter-select">
+                    <option value="">جميع الأنواع</option>
+                    <option value="membership_expiry">انتهاء العضوية</option>
+                    <option value="payment_due">استحقاق دفعة</option>
+                    <option value="attendance_alert">تنبيه حضور</option>
+                    <option value="system_alert">تنبيه نظام</option>
+                    <option value="maintenance">صيانة</option>
+                    <option value="general">عام</option>
+                </select>
+                <select id="statusFilter" class="filter-select">
+                    <option value="">جميع الحالات</option>
+                    <option value="unread">غير مقروء</option>
+                    <option value="read">مقروء</option>
+                </select>
+                <select id="priorityFilter" class="filter-select">
+                    <option value="">جميع الأولويات</option>
+                    <option value="high">عالية</option>
+                    <option value="medium">متوسطة</option>
+                    <option value="low">منخفضة</option>
+                </select>
+                <button class="btn btn-outline" id="clearFiltersBtn">
+                    <i class="fas fa-times"></i>
+                    مسح الفلاتر
+                </button>
+            </div>
+        </div>
+
+        <!-- Notifications List -->
+        <div class="notifications-section">
+            <div class="section-header">
+                <h3>قائمة الإشعارات</h3>
+                <div class="section-actions">
+                    <button class="btn btn-sm btn-outline" id="refreshBtn">
+                        <i class="fas fa-sync-alt"></i>
+                        تحديث
+                    </button>
+                    <div class="view-toggle">
+                        <button class="view-btn active" data-view="list">
+                            <i class="fas fa-list"></i>
+                        </button>
+                        <button class="view-btn" data-view="grid">
+                            <i class="fas fa-th"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- List View -->
+            <div id="listView" class="notifications-list">
+                <!-- سيتم ملؤها بالبيانات -->
+            </div>
+
+            <!-- Grid View -->
+            <div id="gridView" class="notifications-grid" style="display: none;">
+                <!-- سيتم ملؤها بالبيانات -->
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination-container">
+                <div class="pagination-info">
+                    <span>عرض <span id="showingFrom">1</span> إلى <span id="showingTo">10</span> من <span id="totalRecords">0</span> إشعار</span>
+                </div>
+                <div class="pagination">
+                    <button class="page-btn" id="prevPageBtn" disabled>
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                    <div id="pageNumbers" class="page-numbers">
+                        <!-- سيتم ملؤها بأرقام الصفحات -->
+                    </div>
+                    <button class="page-btn" id="nextPageBtn">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Notification Modal -->
+    <div id="createNotificationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>إنشاء إشعار جديد</h3>
+                <button class="modal-close" id="closeCreateModalBtn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="notificationForm" class="notification-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="notificationTitle">عنوان الإشعار *</label>
+                            <input type="text" id="notificationTitle" name="title" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="notificationType">نوع الإشعار *</label>
+                            <select id="notificationType" name="type" required>
+                                <option value="">اختر نوع الإشعار</option>
+                                <option value="membership_expiry">انتهاء العضوية</option>
+                                <option value="payment_due">استحقاق دفعة</option>
+                                <option value="attendance_alert">تنبيه حضور</option>
+                                <option value="system_alert">تنبيه نظام</option>
+                                <option value="maintenance">صيانة</option>
+                                <option value="general">عام</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="notificationMessage">محتوى الإشعار *</label>
+                        <textarea id="notificationMessage" name="message" rows="4" required></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="notificationPriority">الأولوية *</label>
+                            <select id="notificationPriority" name="priority" required>
+                                <option value="">اختر الأولوية</option>
+                                <option value="high">عالية</option>
+                                <option value="medium">متوسطة</option>
+                                <option value="low">منخفضة</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="notificationTarget">الهدف</label>
+                            <select id="notificationTarget" name="target">
+                                <option value="all">جميع المستخدمين</option>
+                                <option value="members">الأعضاء فقط</option>
+                                <option value="trainers">المدربين فقط</option>
+                                <option value="admins">الإداريين فقط</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="scheduleDate">تاريخ الإرسال</label>
+                            <input type="datetime-local" id="scheduleDate" name="schedule_date">
+                            <small>اتركه فارغاً للإرسال الفوري</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="expiryDate">تاريخ الانتهاء</label>
+                            <input type="datetime-local" id="expiryDate" name="expiry_date">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="sendEmail" name="send_email">
+                            <span class="checkmark"></span>
+                            إرسال عبر البريد الإلكتروني
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="sendSMS" name="send_sms">
+                            <span class="checkmark"></span>
+                            إرسال عبر الرسائل النصية
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="cancelCreateBtn">إلغاء</button>
+                <button type="submit" form="notificationForm" class="btn btn-primary" id="saveNotificationBtn">
+                    <i class="fas fa-paper-plane"></i>
+                    إرسال الإشعار
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Details Modal -->
+    <div id="notificationDetailsModal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>تفاصيل الإشعار</h3>
+                <button class="modal-close" id="closeDetailsModalBtn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="notificationDetailsContent">
+                    <!-- سيتم ملؤها بتفاصيل الإشعار -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Settings Modal -->
+    <div id="notificationSettingsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>إعدادات الإشعارات</h3>
+                <button class="modal-close" id="closeSettingsModalBtn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="settingsForm" class="settings-form">
+                    <div class="settings-section">
+                        <h4>الإشعارات العامة</h4>
+                        <div class="setting-item">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="enableNotifications" checked>
+                                <span class="checkmark"></span>
+                                تفعيل الإشعارات
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="enableSounds" checked>
+                                <span class="checkmark"></span>
+                                تفعيل الأصوات
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h4>إشعارات العضوية</h4>
+                        <div class="setting-item">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="membershipExpiryNotifications" checked>
+                                <span class="checkmark"></span>
+                                تنبيهات انتهاء العضوية
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <label for="expiryDaysBefore">التنبيه قبل انتهاء العضوية بـ</label>
+                            <select id="expiryDaysBefore">
+                                <option value="1">يوم واحد</option>
+                                <option value="3" selected>3 أيام</option>
+                                <option value="7">أسبوع</option>
+                                <option value="14">أسبوعين</option>
+                                <option value="30">شهر</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h4>إشعارات الدفع</h4>
+                        <div class="setting-item">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="paymentDueNotifications" checked>
+                                <span class="checkmark"></span>
+                                تنبيهات استحقاق الدفع
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="paymentReceivedNotifications" checked>
+                                <span class="checkmark"></span>
+                                تنبيهات استلام الدفع
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h4>إشعارات الحضور</h4>
+                        <div class="setting-item">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="attendanceNotifications" checked>
+                                <span class="checkmark"></span>
+                                تنبيهات الحضور
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="absenceNotifications">
+                                <span class="checkmark"></span>
+                                تنبيهات الغياب المتكرر
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="cancelSettingsBtn">إلغاء</button>
+                <button type="submit" form="settingsForm" class="btn btn-primary" id="saveSettingsBtn">
+                    <i class="fas fa-save"></i>
+                    حفظ الإعدادات
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <p>جاري التحميل...</p>
+        </div>
+    </div>
+
+    <script src="../scripts/notifications.js"></script>
+</body>
+</html>
+

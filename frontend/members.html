@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة الأعضاء - نظام إدارة الجيم المتطور</title>
+    <link rel="stylesheet" href="../styles/improved_dashboard.css">
+    <link rel="stylesheet" href="../styles/members.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="members-container">
+        <!-- Header -->
+        <div class="page-header">
+            <div class="header-content">
+                <h1>إدارة الأعضاء</h1>
+                <p>إدارة شاملة لجميع أعضاء النادي</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-primary" id="addMemberBtn">
+                    <i class="fas fa-plus"></i>
+                    إضافة عضو جديد
+                </button>
+                <button class="btn btn-secondary" id="importMembersBtn">
+                    <i class="fas fa-upload"></i>
+                    استيراد أعضاء
+                </button>
+                <button class="btn btn-outline" id="exportMembersBtn">
+                    <i class="fas fa-download"></i>
+                    تصدير البيانات
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-icon primary">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 id="totalMembers">0</h3>
+                    <p>إجمالي الأعضاء</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon success">
+                    <i class="fas fa-user-check"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 id="activeMembers">0</h3>
+                    <p>الأعضاء النشطين</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon warning">
+                    <i class="fas fa-user-clock"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 id="expiringMembers">0</h3>
+                    <p>اشتراكات منتهية قريباً</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon info">
+                    <i class="fas fa-user-plus"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 id="newMembersThisMonth">0</h3>
+                    <p>أعضاء جدد هذا الشهر</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters and Search -->
+        <div class="filters-section">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="البحث عن عضو...">
+            </div>
+            <div class="filters">
+                <select id="statusFilter" class="filter-select">
+                    <option value="">جميع الحالات</option>
+                    <option value="active">نشط</option>
+                    <option value="inactive">غير نشط</option>
+                    <option value="suspended">معلق</option>
+                </select>
+                <select id="membershipFilter" class="filter-select">
+                    <option value="">جميع أنواع العضوية</option>
+                    <option value="monthly">شهري</option>
+                    <option value="quarterly">ربع سنوي</option>
+                    <option value="yearly">سنوي</option>
+                    <option value="daily">يومي</option>
+                </select>
+                <select id="genderFilter" class="filter-select">
+                    <option value="">جميع الأجناس</option>
+                    <option value="male">ذكر</option>
+                    <option value="female">أنثى</option>
+                </select>
+                <button class="btn btn-outline" id="clearFiltersBtn">
+                    <i class="fas fa-times"></i>
+                    مسح الفلاتر
+                </button>
+            </div>
+        </div>
+
+        <!-- Members Table -->
+        <div class="table-container">
+            <div class="table-header">
+                <h3>قائمة الأعضاء</h3>
+                <div class="table-actions">
+                    <button class="btn btn-sm btn-outline" id="refreshBtn">
+                        <i class="fas fa-sync-alt"></i>
+                        تحديث
+                    </button>
+                    <div class="view-toggle">
+                        <button class="view-btn active" data-view="table">
+                            <i class="fas fa-table"></i>
+                        </button>
+                        <button class="view-btn" data-view="grid">
+                            <i class="fas fa-th"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table View -->
+            <div id="tableView" class="table-view">
+                <table class="members-table">
+                    <thead>
+                        <tr>
+                            <th>
+                                <input type="checkbox" id="selectAll">
+                            </th>
+                            <th>الصورة</th>
+                            <th>الاسم</th>
+                            <th>الهاتف</th>
+                            <th>البريد الإلكتروني</th>
+                            <th>نوع العضوية</th>
+                            <th>تاريخ الانتهاء</th>
+                            <th>الحالة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="membersTableBody">
+                        <!-- سيتم ملؤها بالبيانات -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Grid View -->
+            <div id="gridView" class="grid-view" style="display: none;">
+                <div id="membersGrid" class="members-grid">
+                    <!-- سيتم ملؤها بالبيانات -->
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination-container">
+                <div class="pagination-info">
+                    <span>عرض <span id="showingFrom">1</span> إلى <span id="showingTo">10</span> من <span id="totalRecords">0</span> عضو</span>
+                </div>
+                <div class="pagination">
+                    <button class="page-btn" id="prevPageBtn" disabled>
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                    <div id="pageNumbers" class="page-numbers">
+                        <!-- سيتم ملؤها بأرقام الصفحات -->
+                    </div>
+                    <button class="page-btn" id="nextPageBtn">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Member Modal -->
+    <div id="memberModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">إضافة عضو جديد</h3>
+                <button class="modal-close" id="closeModalBtn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="memberForm" class="member-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="memberName">الاسم الكامل *</label>
+                            <input type="text" id="memberName" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="memberPhone">رقم الهاتف *</label>
+                            <input type="tel" id="memberPhone" name="phone" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="memberEmail">البريد الإلكتروني</label>
+                            <input type="email" id="memberEmail" name="email">
+                        </div>
+                        <div class="form-group">
+                            <label for="memberGender">الجنس *</label>
+                            <select id="memberGender" name="gender" required>
+                                <option value="">اختر الجنس</option>
+                                <option value="male">ذكر</option>
+                                <option value="female">أنثى</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="memberBirthDate">تاريخ الميلاد</label>
+                            <input type="date" id="memberBirthDate" name="date_of_birth">
+                        </div>
+                        <div class="form-group">
+                            <label for="membershipType">نوع العضوية *</label>
+                            <select id="membershipType" name="membership_type" required>
+                                <option value="">اختر نوع العضوية</option>
+                                <option value="daily">يومي</option>
+                                <option value="monthly">شهري</option>
+                                <option value="quarterly">ربع سنوي</option>
+                                <option value="yearly">سنوي</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="memberAddress">العنوان</label>
+                        <textarea id="memberAddress" name="address" rows="3"></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="emergencyContactName">اسم جهة الاتصال للطوارئ</label>
+                            <input type="text" id="emergencyContactName" name="emergency_contact_name">
+                        </div>
+                        <div class="form-group">
+                            <label for="emergencyContactPhone">هاتف جهة الاتصال للطوارئ</label>
+                            <input type="tel" id="emergencyContactPhone" name="emergency_contact_phone">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="medicalNotes">الملاحظات الطبية</label>
+                        <textarea id="medicalNotes" name="medical_notes" rows="3" placeholder="أي حالات طبية أو قيود على التمارين..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="memberPhoto">صورة العضو</label>
+                        <div class="photo-upload">
+                            <input type="file" id="memberPhoto" name="photo" accept="image/*">
+                            <div class="photo-preview" id="photoPreview">
+                                <i class="fas fa-camera"></i>
+                                <span>اختر صورة</span>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="cancelBtn">إلغاء</button>
+                <button type="submit" form="memberForm" class="btn btn-primary" id="saveMemberBtn">
+                    <i class="fas fa-save"></i>
+                    حفظ
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Member Details Modal -->
+    <div id="memberDetailsModal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>تفاصيل العضو</h3>
+                <button class="modal-close" id="closeMemberDetailsBtn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="memberDetailsContent">
+                    <!-- سيتم ملؤها بتفاصيل العضو -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Actions Modal -->
+    <div id="bulkActionsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>إجراءات متعددة</h3>
+                <button class="modal-close" id="closeBulkActionsBtn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>تم اختيار <span id="selectedCount">0</span> عضو</p>
+                <div class="bulk-actions">
+                    <button class="btn btn-warning" id="bulkSuspendBtn">
+                        <i class="fas fa-pause"></i>
+                        تعليق الأعضاء
+                    </button>
+                    <button class="btn btn-success" id="bulkActivateBtn">
+                        <i class="fas fa-play"></i>
+                        تفعيل الأعضاء
+                    </button>
+                    <button class="btn btn-danger" id="bulkDeleteBtn">
+                        <i class="fas fa-trash"></i>
+                        حذف الأعضاء
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <p>جاري التحميل...</p>
+        </div>
+    </div>
+
+    <script src="../scripts/members.js"></script>
+</body>
+</html>
+

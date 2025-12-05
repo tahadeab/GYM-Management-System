@@ -1,0 +1,37 @@
+{
+  "name": "gym-system",
+  "version": "1.0.0",
+  "description": "نظام جيم سطح مكتب باستخدام Electron.js",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "web": "python3 -m http.server 8080 || python -m http.server 8080",
+    "setup": "node database/improved_db.js",
+    "test": "jest --runInBand",
+    "test:unit": "jest --testPathPattern=tests/unit --runInBand",
+    "test:integration": "jest --testPathPattern=tests/integration --runInBand",
+    "test:e2e": "playwright test",
+    "test:watch": "jest --watch --runInBand",
+    "test:coverage": "jest --coverage --runInBand",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "@types/jest": "^29.5.11",
+    "electron": "^37.2.5",
+    "eslint": "^8.56.0",
+    "jest": "^29.7.0"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "chart.js": "^4.5.0",
+    "dayjs": "^1.11.13",
+    "dompurify": "^3.2.6",
+    "dotenv": "^17.2.3",
+    "jspdf": "^3.0.1",
+    "sqlite3": "^5.1.7",
+    "validator": "^13.15.15",
+    "xlsx": "^0.18.5"
+  }
+}

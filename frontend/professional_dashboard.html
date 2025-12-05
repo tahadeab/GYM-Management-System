@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم - نظام إدارة الجيم المتطور</title>
+    <link rel="stylesheet" href="../styles/professional_dashboard.css">
+    <link rel="stylesheet" href="../styles/dark-mode.css">
+    <link rel="stylesheet" href="../styles/toast.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+</head>
+<body>
+    <!-- شريط التنقل العلوي -->
+    <nav class="top-navbar">
+        <div class="navbar-brand">
+            <img src="../assets/gym-logo-main.png" alt="شعار النادي" class="brand-logo">
+            <div class="brand-text">
+                <h1 class="brand-title">نظام إدارة الجيم</h1>
+                <span class="brand-subtitle">الإصدار المتطور 2.0</span>
+            </div>
+        </div>
+
+        <div class="navbar-center">
+            <div class="search-container">
+                <input type="text" id="globalSearch" placeholder="البحث في النظام..." class="search-input">
+                <button class="search-btn">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="navbar-actions">
+            <div class="notification-center">
+                <button class="notification-btn" id="notificationBtn">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge" id="notificationBadge">3</span>
+                </button>
+                <div class="notification-dropdown" id="notificationDropdown">
+                    <div class="notification-header">
+                        <h3>الإشعارات</h3>
+                        <button class="mark-all-read">تحديد الكل كمقروء</button>
+                    </div>
+                    <div class="notification-list" id="notificationList">
+                        <!-- سيتم ملء الإشعارات ديناميكياً -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="user-menu">
+                <button class="user-btn" id="userMenuBtn">
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="user-info">
+                        <span class="user-name" id="userName">المدير العام</span>
+                        <span class="user-role" id="userRole">مدير النظام</span>
+                    </div>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="user-dropdown" id="userDropdown">
+                    <a href="#" class="dropdown-item">
+                        <i class="fas fa-user-cog"></i>
+                        الملف الشخصي
+                    </a>
+                    <a href="#" class="dropdown-item">
+                        <i class="fas fa-cog"></i>
+                        الإعدادات
+                    </a>
+                    <hr class="dropdown-divider">
+                    <a href="#" class="dropdown-item" id="logoutBtn">
+                        <i class="fas fa-sign-out-alt"></i>
+                        تسجيل الخروج
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <!-- الشريط الجانبي -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <button class="sidebar-toggle" id="sidebarToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+
+            <nav class="sidebar-nav">
+                <ul class="nav-list">
+                    <li class="nav-item active">
+                        <a href="#dashboard" class="nav-link" data-page="dashboard">
+                            <img src="../assets/dashboard-icon.png" alt="لوحة التحكم" class="nav-icon">
+                            <span class="nav-text">لوحة التحكم</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#members" class="nav-link" data-page="members">
+                            <img src="../assets/members-icon.png" alt="الأعضاء" class="nav-icon">
+                            <span class="nav-text">إدارة الأعضاء</span>
+                            <span class="nav-badge">245</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#trainers" class="nav-link" data-page="trainers">
+                            <img src="../assets/trainers-icon.png" alt="المدربين" class="nav-icon">
+                            <span class="nav-text">المدربين</span>
+                            <span class="nav-badge">12</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#classes" class="nav-link" data-page="classes">
+                            <img src="../assets/classes-icon.png" alt="الحصص" class="nav-icon">
+                            <span class="nav-text">الحصص والبرامج</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#equipment" class="nav-link" data-page="equipment">
+                            <img src="../assets/equipment-icon.png" alt="المعدات" class="nav-icon">
+                            <span class="nav-text">إدارة المعدات</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#payments" class="nav-link" data-page="payments">
+                            <img src="../assets/payments-icon.png" alt="المدفوعات" class="nav-icon">
+                            <span class="nav-text">المدفوعات</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#reports" class="nav-link" data-page="reports">
+                            <img src="../assets/reports-icon.png" alt="التقارير" class="nav-icon">
+                            <span class="nav-text">التقارير والإحصائيات</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#settings" class="nav-link" data-page="settings">
+                            <img src="../assets/settings-icon.png" alt="الإعدادات" class="nav-icon">
+                            <span class="nav-text">إعدادات النظام</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="system-status">
+                    <div class="status-item">
+                        <div class="status-indicator online"></div>
+                        <span>النظام متصل</span>
+                    </div>
+                    <div class="status-item">
+                        <i class="fas fa-database"></i>
+                        <span>قاعدة البيانات: نشطة</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- المحتوى الرئيسي -->
+        <main class="main-content">
+            <!-- صفحة لوحة التحكم -->
+            <div class="page-content active" id="dashboard-page">
+                <!-- رأس الصفحة -->
+                <div class="page-header">
+                    <div class="header-content">
+                        <h1 class="page-title">لوحة التحكم الرئيسية</h1>
+                        <p class="page-subtitle">نظرة عامة على أداء النادي اليوم</p>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn btn-primary" id="refreshDataBtn">
+                            <i class="fas fa-sync-alt"></i>
+                            تحديث البيانات
+                        </button>
+                        <button class="btn btn-secondary" id="exportReportBtn">
+                            <i class="fas fa-download"></i>
+                            تصدير التقرير
+                        </button>
+                    </div>
+                </div>
+
+                <!-- بطاقات الإحصائيات السريعة -->
+                <div class="stats-grid">
+                    <div class="stat-card primary">
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 class="stat-number" id="totalMembers">245</h3>
+                            <p class="stat-label">إجمالي الأعضاء</p>
+                            <div class="stat-change positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+12 هذا الشهر</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card success">
+                        <div class="stat-icon">
+                            <i class="fas fa-user-check"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 class="stat-number" id="activeMembers">189</h3>
+                            <p class="stat-label">الأعضاء النشطون</p>
+                            <div class="stat-change positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+8 اليوم</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card warning">
+                        <div class="stat-icon">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 class="stat-number" id="todayRevenue">2,450</h3>
+                            <p class="stat-label">إيرادات اليوم (ر.س)</p>
+                            <div class="stat-change positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+15%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card info">
+                        <div class="stat-icon">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 class="stat-number" id="todayAttendance">67</h3>
+                            <p class="stat-label">الحضور اليوم</p>
+                            <div class="stat-change neutral">
+                                <i class="fas fa-minus"></i>
+                                <span>نفس الأمس</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- الرسوم البيانية والتحليلات -->
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3 class="chart-title">إحصائيات الحضور الأسبوعية</h3>
+                            <div class="chart-actions">
+                                <select class="chart-filter" id="attendanceFilter">
+                                    <option value="week">هذا الأسبوع</option>
+                                    <option value="month">هذا الشهر</option>
+                                    <option value="year">هذا العام</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="attendanceChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3 class="chart-title">الإيرادات الشهرية</h3>
+                            <div class="chart-actions">
+                                <button class="chart-btn active" data-period="6months">6 أشهر</button>
+                                <button class="chart-btn" data-period="year">سنة</button>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="revenueChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- الأنشطة الحديثة والتنبيهات -->
+                <div class="activity-grid">
+                    <div class="activity-card">
+                        <div class="activity-header">
+                            <h3 class="activity-title">الأنشطة الحديثة</h3>
+                            <a href="#" class="view-all-link">عرض الكل</a>
+                        </div>
+                        <div class="activity-list" id="recentActivities">
+                            <!-- سيتم ملء الأنشطة ديناميكياً -->
+                        </div>
+                    </div>
+
+                    <div class="alerts-card">
+                        <div class="alerts-header">
+                            <h3 class="alerts-title">التنبيهات المهمة</h3>
+                            <span class="alerts-count" id="alertsCount">4</span>
+                        </div>
+                        <div class="alerts-list" id="importantAlerts">
+                            <!-- سيتم ملء التنبيهات ديناميكياً -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- الحصص القادمة -->
+                <div class="upcoming-classes">
+                    <div class="section-header">
+                        <h3 class="section-title">الحصص القادمة اليوم</h3>
+                        <button class="btn btn-outline" id="manageClassesBtn">
+                            <i class="fas fa-calendar-plus"></i>
+                            إدارة الحصص
+                        </button>
+                    </div>
+                    <div class="classes-timeline" id="upcomingClassesTimeline">
+                        <!-- سيتم ملء الحصص ديناميكياً -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- صفحات أخرى -->
+            <div class="page-content" id="members-page">
+                <div class="page-header">
+                    <h1 class="page-title">إدارة الأعضاء</h1>
+                    <p class="page-subtitle">إدارة شاملة لجميع أعضاء النادي</p>
+                    <div class="header-actions">
+                        <button class="btn btn-primary" id="addMemberBtn">
+                            <i class="fas fa-user-plus"></i>
+                            إضافة عضو جديد
+                        </button>
+                        <button class="btn btn-secondary" id="exportMembersBtn">
+                            <i class="fas fa-download"></i>
+                            تصدير الأعضاء
+                        </button>
+                    </div>
+                </div>
+
+                <div class="members-table-container">
+                    <div class="table-header">
+                        <div class="search-filter">
+                            <input type="text" id="membersSearch" placeholder="البحث عن عضو..." class="search-input">
+                            <select id="membersFilter" class="filter-select">
+                                <option value="all">جميع الأعضاء</option>
+                                <option value="active">الأعضاء النشطون</option>
+                                <option value="inactive">الأعضاء غير النشطين</option>
+                                <option value="expired">الاشتراكات المنتهية</option>
+                            </select>
+                        </div>
+                    </div>
+                    <table class="members-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>الاسم</th>
+                                <th>البريد الإلكتروني</th>
+                                <th>رقم الهاتف</th>
+                                <th>تاريخ الانضمام</th>
+                                <th>تاريخ انتهاء الاشتراك</th>
+                                <th>الحالة</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="membersTableBody">
+                            <!-- سيتم ملء بيانات الأعضاء هنا -->
+                        </tbody>
+                    </table>
+                    <div class="pagination">
+                        <button class="btn btn-secondary" id="prevPageBtn"><i class="fas fa-chevron-right"></i> السابق</button>
+                        <span id="pageInfo">الصفحة 1 من 5</span>
+                        <button class="btn btn-secondary" id="nextPageBtn">التالي <i class="fas fa-chevron-left"></i></button>
+                    </div>
+                </div>
+
+                <!-- نافذة منبثقة لإضافة/تعديل عضو -->
+                <div class="modal" id="memberModal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>إضافة/تعديل عضو</h3>
+                            <button class="modal-close">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="memberForm">
+                                <div class="form-group">
+                                    <label for="memberName">الاسم الكامل:</label>
+                                    <input type="text" id="memberName" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="memberEmail">البريد الإلكتروني:</label>
+                                    <input type="email" id="memberEmail">
+                                </div>
+                                <div class="form-group">
+                                    <label for="memberPhone">رقم الهاتف:</label>
+                                    <input type="tel" id="memberPhone">
+                                </div>
+                                <div class="form-group">
+                                    <label for="memberJoinDate">تاريخ الانضمام:</label>
+                                    <input type="date" id="memberJoinDate" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="memberExpiryDate">تاريخ انتهاء الاشتراك:</label>
+                                    <input type="date" id="memberExpiryDate" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="memberStatus">الحالة:</label>
+                                    <select id="memberStatus">
+                                        <option value="active">نشط</option>
+                                        <option value="inactive">غير نشط</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-primary">حفظ</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-content" id="trainers-page">
+                <div class="page-header">
+                    <h1 class="page-title">إدارة المدربين</h1>
+                    <p class="page-subtitle">إدارة شاملة لجميع المدربين في النادي</p>
+                    <div class="header-actions">
+                        <button class="btn btn-primary" id="addTrainerBtn">
+                            <i class="fas fa-user-plus"></i>
+                            إضافة مدرب جديد
+                        </button>
+                    </div>
+                </div>
+
+                <div class="trainers-table-container">
+                    <table class="trainers-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>الاسم</th>
+                                <th>البريد الإلكتروني</th>
+                                <th>رقم الهاتف</th>
+                                <th>التخصص</th>
+                                <th>الحالة</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="trainersTableBody">
+                            <!-- Trainers will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Trainer Modal -->
+                <div class="modal" id="trainerModal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>إضافة/تعديل مدرب</h3>
+                            <button class="modal-close">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="trainerForm">
+                                <div class="form-group">
+                                    <label for="trainerName">الاسم الكامل:</label>
+                                    <input type="text" id="trainerName" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="trainerEmail">البريد الإلكتروني:</label>
+                                    <input type="email" id="trainerEmail">
+                                </div>
+                                <div class="form-group">
+                                    <label for="trainerPhone">رقم الهاتف:</label>
+                                    <input type="tel" id="trainerPhone">
+                                </div>
+                                <div class="form-group">
+                                    <label for="trainerSpecialty">التخصص:</label>
+                                    <input type="text" id="trainerSpecialty">
+                                </div>
+                                <div class="form-group">
+                                    <label for="trainerStatus">الحالة:</label>
+                                    <select id="trainerStatus">
+                                        <option value="active">نشط</option>
+                                        <option value="inactive">غير نشط</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-primary">حفظ</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-content" id="classes-page">
+                <!-- محتوى صفحة الحصص -->
+            </div>
+
+            <div class="page-content" id="equipment-page">
+                <!-- محتوى صفحة المعدات -->
+            </div>
+
+            <div class="page-content" id="payments-page">
+                <div class="page-header">
+                    <h1 class="page-title">إدارة المدفوعات</h1>
+                    <p class="page-subtitle">تتبع وإدارة جميع المدفوعات والاشتراكات</p>
+                </div>
+                <div id="paymentsTableContainer">
+                    <!-- Payments table will be loaded here -->
+                </div>
+            </div>
+
+            <div class="page-content" id="reports-page">
+                <div class="page-header">
+                    <h1 class="page-title">التقارير والإحصائيات</h1>
+                    <p class="page-subtitle">تقارير شاملة وإحصائيات مفصلة</p>
+                </div>
+                <!-- محتوى صفحة التقارير -->
+            </div>
+
+            <div class="page-content" id="settings-page">
+                <div class="page-header">
+                    <h1 class="page-title">إعدادات النظام</h1>
+                    <p class="page-subtitle">إعدادات عامة وتخصيص النظام</p>
+                </div>
+                <div id="usersListContainer">
+                    <!-- Users list will be loaded here -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- نافذة منبثقة للإشعارات -->
+    <div class="modal" id="notificationModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>تفاصيل الإشعار</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body" id="notificationModalBody">
+                <!-- محتوى الإشعار -->
+            </div>
+        </div>
+    </div>
+
+    <!-- شريط التحميل -->
+    <div class="loading-bar" id="loadingBar">
+        <div class="loading-progress"></div>
+    </div>
+
+    <!-- رسائل التنبيه -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="../scripts/professional_dashboard.js"></script>
+    <script src="../scripts/members_page.js"></script>
+    <script src="../scripts/trainers.js"></script>
+    <script src="../scripts/settings.js"></script>
+    <script src="../scripts/payments.js"></script>
+    <script src="../scripts/dark-mode.js"></script>
+</body>
+</html>
+
