@@ -101,6 +101,7 @@ styles/                       Page styles and language-switcher styles
 assets/                       Branding and interface assets
 tests/                        Unit, integration, and Playwright tests
 docs/USER_GUIDE.md            Complete bilingual user guide
+docs/DESKTOP_PARITY_AUDIT.md  Verified desktop/web feature parity matrix
 ```
 
 ## Release procedure and installer packaging
