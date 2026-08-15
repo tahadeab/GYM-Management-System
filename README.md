@@ -103,13 +103,23 @@ tests/                        Unit, integration, and Playwright tests
 docs/USER_GUIDE.md            Complete bilingual user guide
 ```
 
-## Release procedure and current packaging status
+## Release procedure and installer packaging
 
-The repository currently provides a source-based Electron release workflow and does not define an installer or distributable package script in `package.json`. For a controlled source release, install dependencies with `npm ci` or `npm install`, set a private `ADMIN_PASSWORD`, run `npm run check`, `npm test`, and the relevant Playwright checks, then distribute the reviewed repository through the organization's approved release channel. If Windows, macOS, or Linux installers are required, add and review a signed Electron Builder or Electron Forge pipeline before publishing end-user binaries; no installer is claimed by this repository at this time.
+The repository uses `electron-builder` to package the desktop application. The configured Windows target is an NSIS installer with a selectable installation directory, Start Menu shortcut, and Desktop shortcut.
+
+```powershell
+npm install
+npm run check
+npm test
+npm run build
+npm run dist:win
+```
+
+`npm run dist:dir` creates an unpacked application for local packaging verification. `npm run dist:win` creates `release/PulseForge-Gym-Management-Setup-1.0.0.exe` or the equivalent versioned filename. Build the final Windows installer on Windows or a configured CI runner for the most reliable result. Cross-building from Linux requires a working Wine environment and may fail during the installer validation step. The installer currently uses the default Electron icon; add a reviewed `.ico` asset before publishing a branded production release.
 
 ## Final verification notes
 
-The final validation completed the JavaScript syntax check and all 53 Jest tests. The test environment correctly reports a security warning when `ADMIN_PASSWORD` is absent and generates a temporary administrator password for development. Production operators must set a strong private `ADMIN_PASSWORD` before first launch and change any temporary password immediately. The web and mobile projects have separate README files and MIT licenses, while mobile bearer-token entry and native push notification delivery remain transitional deployment concerns described in the mobile documentation.
+The final validation completed the JavaScript syntax check and all 55 Jest tests. The unpacked Electron package was generated successfully with electron-builder; NSIS installer generation is configured and should be finalized on Windows or CI because the sandbox Linux environment lacks a fully compatible Wine runtime. The test environment correctly reports a security warning when `ADMIN_PASSWORD` is absent and generates a temporary administrator password for development. Production operators must set a strong private `ADMIN_PASSWORD` before first launch and change any temporary password immediately. The web and mobile projects have separate README files and MIT licenses, while mobile bearer-token entry and native push notification delivery remain transitional deployment concerns described in the mobile documentation.
 
 ## Arabic summary
 
@@ -134,3 +144,5 @@ This project is distributed under the MIT License. See [`LICENSE`](./LICENSE).
 ## Maintainer
 
 Maintained by **taha deab**.
+
+<!-- Desktop UI and installer enhancement work is tracked in the active project plan. -->

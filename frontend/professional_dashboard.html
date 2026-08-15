@@ -526,8 +526,16 @@
         </div>
     </div>
 
+    <!-- شاشة تحميل النظام: تظهر أثناء جلب البيانات وتوضح للمستخدم سبب الانتظار -->
+    <div class="loading-overlay" id="loadingOverlay" role="status" aria-live="polite" aria-hidden="true">
+        <div class="loading-card">
+            <div class="loading-spinner" aria-hidden="true"></div>
+            <strong id="loadingTitle">جاري تحميل بيانات النظام</strong>
+            <span id="loadingMessage">لحظات من فضلك... / Please wait...</span>
+        </div>
+    </div>
     <!-- شريط التحميل -->
-    <div class="loading-bar" id="loadingBar">
+    <div class="loading-bar" id="loadingBar" aria-hidden="true">
         <div class="loading-progress"></div>
     </div>
 
