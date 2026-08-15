@@ -38,7 +38,7 @@ test.describe('Member Management E2E', () => {
         const testMemberName = `Test Member ${Date.now()}`;
         await window.fill('input[name="name"], #member-name', testMemberName);
         await window.fill('input[name="email"], #member-email', `test${Date.now()}@example.com`);
-        await window.fill('input[name="phone"], #member-phone', `555${Math.floor(Math.random() * 10000000)}`);
+        await window.fill('input[name="phone"], #member-phone', `555${String(Math.floor(Math.random() * 10000000)).padStart(7, '0')}`);
 
         // Submit form
         await window.click('button[type="submit"], .save-btn, .submit-btn');

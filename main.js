@@ -30,6 +30,8 @@ class GymManagementApp {
         this.setupApp();
         this.setupDatabase();
         this.setupIPC();
+        this.notificationTimer = setInterval(() => db.generateSubscriptionNotifications().catch(err => console.error('Notification sweep failed:', err)), 24 * 60 * 60 * 1000);
+        db.generateSubscriptionNotifications().catch(err => console.error('Initial notification sweep failed:', err));
     }
 
     setupApp() {
@@ -338,6 +340,14 @@ class GymManagementApp {
                 throw error;
             }
         });
+
+        ipcMain.handle('get-subscriptions', async () => db.getSubscriptionSummary(this.currentUser));
+        ipcMain.handle('get-expiring-subscriptions', async (event, days) => db.getExpiringSubscriptions(this.currentUser, days));
+        ipcMain.handle('freeze-subscription', async (event, data) => db.freezeSubscription(data.id, data.freezeUntil, this.currentUser));
+        ipcMain.handle('unfreeze-subscription', async (event, id) => db.unfreezeSubscription(id, this.currentUser));
+        ipcMain.handle('get-notifications', async () => db.getUnreadNotifications(this.currentUser && this.currentUser.id));
+        ipcMain.handle('mark-notification-read', async (event, id) => db.markNotificationRead(id, this.currentUser && this.currentUser.id));
+        ipcMain.handle('run-notification-sweep', async () => db.generateSubscriptionNotifications(this.currentUser && this.currentUser.id));
 
         ipcMain.handle('get-payments', async () => {
             try {

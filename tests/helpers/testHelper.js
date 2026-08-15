@@ -75,7 +75,7 @@ class TestHelper {
         const defaultMember = {
             name: 'Test Member',
             email: `test${Math.random().toString(36).substring(7)}@example.com`,
-            phone: `555${Math.floor(Math.random() * 10000000)}`,
+            phone: `555${String(Math.floor(Math.random() * 10000000)).padStart(7, '0')}`,
             membership_type: 'monthly',
             status: 'active',
             join_date: new Date().toISOString(),
@@ -94,7 +94,7 @@ class TestHelper {
             name: 'Test Trainer',
             specialty: 'Fitness',
             email: `trainer${Math.random().toString(36).substring(7)}@example.com`,
-            phone: `555${Math.floor(Math.random() * 10000000)}`,
+            phone: `555${String(Math.floor(Math.random() * 10000000)).padStart(7, '0')}`,
             status: 'active',
             ...trainerData
         };

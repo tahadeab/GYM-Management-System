@@ -23,6 +23,14 @@ contextBridge.exposeInMainWorld('api', {
     // Payments/Subscriptions
     renewSubscription: (data) => ipcRenderer.invoke('renew-subscription', data),
     getPayments: () => ipcRenderer.invoke('get-payments'),
+    getSubscriptions: () => ipcRenderer.invoke('get-subscriptions'),
+    getExpiringSubscriptions: (days) => ipcRenderer.invoke('get-expiring-subscriptions', days),
+    freezeSubscription: (data) => ipcRenderer.invoke('freeze-subscription', data),
+    unfreezeSubscription: (id) => ipcRenderer.invoke('unfreeze-subscription', id),
+    getNotifications: () => ipcRenderer.invoke('get-notifications'),
+    markNotificationRead: (id) => ipcRenderer.invoke('mark-notification-read', id),
+    runNotificationSweep: () => ipcRenderer.invoke('run-notification-sweep'),
+
 
     // Dashboard
     getDashboardStats: () => ipcRenderer.invoke('get-dashboard-stats'),

@@ -7,6 +7,7 @@ class ImprovedDatabase {
         const defaultPath = path.join(__dirname, 'gym_improved.db');
         this.dbPath = dbPath || defaultPath;
         this.db = new sqlite3.Database(this.dbPath);
+        this.transactionQueue = Promise.resolve();
         this.init();
     }
 
@@ -432,6 +433,22 @@ class ImprovedDatabase {
         });
     }
 
+    enqueueTransaction(work) {
+        const execute = this.transactionQueue.then(async () => {
+            await this.run('BEGIN IMMEDIATE TRANSACTION');
+            try {
+                const result = await work();
+                await this.run('COMMIT');
+                return result;
+            } catch (error) {
+                try { await this.run('ROLLBACK'); } catch (_) { /* preserve original error */ }
+                throw error;
+            }
+        });
+        this.transactionQueue = execute.catch(() => undefined);
+        return execute;
+    }
+
     // دوال المدفوعات والاشتراكات
     async addPayment(payment) {
         return new Promise((resolve, reject) => {
@@ -478,70 +495,25 @@ class ImprovedDatabase {
     }
 
     async renewSubscription(memberId, durationMonths, amount, paymentMethod, processedBy) {
-        if (!memberId) return Promise.reject(new Error('رقم العضو مطلوب'));
-        if (durationMonths <= 0) return Promise.reject(new Error('مدة الاشتراك يجب أن تكون أكبر من صفر'));
-        if (amount < 0) return Promise.reject(new Error('المبلغ لا يمكن أن يكون سالباً'));
+        if (!memberId) throw new Error('رقم العضو مطلوب');
+        if (durationMonths <= 0) throw new Error('مدة الاشتراك يجب أن تكون أكبر من صفر');
+        if (amount < 0) throw new Error('المبلغ لا يمكن أن يكون سالباً');
+        const member = await this.getAsync('SELECT id FROM members WHERE id = ?', [memberId]);
+        if (!member) throw new Error('العضو غير موجود');
 
-        return new Promise((resolve, reject) => {
-            const that = this;
-            this.db.serialize(() => {
-                that.db.run('BEGIN TRANSACTION');
-
-                // 1. Get current subscription
-                that.db.get('SELECT * FROM subscriptions WHERE member_id = ? AND status = "active"', [memberId], (err, sub) => {
-                    if (err) {
-                        that.db.run('ROLLBACK');
-                        return reject(err);
-                    }
-
-                    // Calculate new dates
-                    let startDate = new Date();
-                    if (sub && new Date(sub.end_date) > startDate) {
-                        startDate = new Date(sub.end_date);
-                    }
-
-                    const endDate = new Date(startDate);
-                    endDate.setMonth(endDate.getMonth() + durationMonths);
-
-                    // 2. Add Payment
-                    that.db.run(`
-                        INSERT INTO payments (member_id, amount, method, status, description, processed_by)
-                        VALUES (?, ?, ?, 'completed', ?, ?)
-                    `, [memberId, amount, paymentMethod, `تجديد اشتراك ${durationMonths} شهر`, processedBy], function (err) {
-                        if (err) {
-                            that.db.run('ROLLBACK');
-                            return reject(err);
-                        }
-
-                        // 3. Update or Insert Subscription
-                        if (sub) {
-                            that.db.run(`
-                                UPDATE subscriptions SET end_date = ?, updated_at = CURRENT_TIMESTAMP
-                                WHERE id = ?
-                            `, [endDate.toISOString(), sub.id], function (err) {
-                                if (err) {
-                                    that.db.run('ROLLBACK');
-                                    return reject(err);
-                                }
-                                that.db.run('COMMIT');
-                                resolve({ success: true, newEndDate: endDate });
-                            });
-                        } else {
-                            that.db.run(`
-                                INSERT INTO subscriptions (member_id, plan, start_date, end_date, amount, status, created_by)
-                                VALUES (?, 'monthly', ?, ?, ?, 'active', ?)
-                            `, [memberId, startDate.toISOString(), endDate.toISOString(), amount, processedBy], function (err) {
-                                if (err) {
-                                    that.db.run('ROLLBACK');
-                                    return reject(err);
-                                }
-                                that.db.run('COMMIT');
-                                resolve({ success: true, newEndDate: endDate });
-                            });
-                        }
-                    });
-                });
-            });
+        return this.enqueueTransaction(async () => {
+            const sub = await this.getAsync('SELECT * FROM subscriptions WHERE member_id = ? AND status = "active"', [memberId]);
+            let startDate = new Date();
+            if (sub && new Date(sub.end_date) > startDate) startDate = new Date(sub.end_date);
+            const endDate = new Date(startDate);
+            endDate.setMonth(endDate.getMonth() + Number(durationMonths));
+            await this.run(`INSERT INTO payments (member_id, amount, method, status, description, processed_by, created_by) VALUES (?, ?, ?, 'completed', ?, ?, ?)`, [memberId, amount, paymentMethod || 'cash', `تجديد اشتراك ${durationMonths} شهر`, processedBy, processedBy]);
+            if (sub) {
+                await this.run(`UPDATE subscriptions SET end_date = ?, amount = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, [endDate.toISOString(), amount, sub.id]);
+            } else {
+                await this.run(`INSERT INTO subscriptions (member_id, plan, start_date, end_date, amount, status, created_by) VALUES (?, 'monthly', ?, ?, ?, 'active', ?)`, [memberId, startDate.toISOString(), endDate.toISOString(), amount, processedBy]);
+            }
+            return { success: true, newEndDate: endDate };
         });
     }
     async getAllMembers(user) {
@@ -582,84 +554,18 @@ class ImprovedDatabase {
 
     async addMember(member, user) {
         const validationError = this.validateMember(member);
-        if (validationError) return Promise.reject(new Error(validationError));
-
-        return new Promise((resolve, reject) => {
-            // Check for duplicate email/phone
-            this.db.get('SELECT id FROM members WHERE email = ? OR phone = ?', [member.email, member.phone], (err, row) => {
-                if (err) return reject(err);
-                if (row) return reject(new Error('العضو موجود بالفعل (البريد الإلكتروني أو الهاتف مكرر)'));
-
-                const that = this;
-                that.db.serialize(() => {
-                    // Use BEGIN TRANSACTION
-                    that.db.run('BEGIN TRANSACTION', (err) => {
-                        if (err) return reject(err);
-
-                        // Double check inside transaction for extra safety
-                        that.db.get('SELECT id FROM members WHERE email = ? OR phone = ?', [member.email, member.phone], (err, row) => {
-                            if (err) {
-                                that.db.run('ROLLBACK');
-                                return reject(err);
-                            }
-                            if (row) {
-                                that.db.run('ROLLBACK');
-                                return reject(new Error('العضو موجود بالفعل (البريد الإلكتروني أو الهاتف مكرر)'));
-                            }
-
-                            that.db.run(`
-                                INSERT INTO members (
-                                    name, phone, email, date_of_birth, gender, address,
-                                    emergency_contact_name, emergency_contact_phone, medical_notes,
-                                    membership_type, photo, join_date, status, created_by
-                                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                            `, [
-                                member.name, member.phone, member.email, member.date_of_birth,
-                                member.gender, member.address, member.emergency_contact_name,
-                                member.emergency_contact_phone, member.medical_notes,
-                                member.membership_type, member.photo, member.join_date, member.status,
-                                user ? user.id : null
-                            ], function (err) {
-                                if (err) {
-                                    that.db.run('ROLLBACK');
-                                    return reject(err);
-                                }
-
-                                const memberId = this.lastID;
-
-                                if (member.expiryDate) {
-                                    that.db.run(`
-                                        INSERT INTO subscriptions (
-                                            member_id, plan, start_date, end_date, amount, status, created_by
-                                        ) VALUES (?, ?, ?, ?, ?, ?, ?)
-                                    `, [
-                                        memberId,
-                                        member.membership_type || 'monthly',
-                                        member.join_date || new Date().toISOString(),
-                                        member.expiryDate,
-                                        0, // Default amount 0 for now
-                                        'active',
-                                        user ? user.id : null
-                                    ], (err) => {
-                                        if (err) {
-                                            that.db.run('ROLLBACK');
-                                            return reject(err);
-                                        }
-                                        that.db.run('COMMIT');
-                                        resolve(memberId);
-                                    });
-                                } else {
-                                    that.db.run('COMMIT');
-                                    resolve(memberId);
-                                }
-                            });
-                        });
-                    });
-                });
-            });
+        if (validationError) throw new Error(validationError);
+        if (member.expiryDate && Number.isNaN(new Date(member.expiryDate).getTime())) throw new Error('تاريخ انتهاء الاشتراك غير صالح');
+        return this.enqueueTransaction(async () => {
+            const duplicate = await this.getAsync('SELECT id FROM members WHERE (email IS NOT NULL AND email = ?) OR (phone IS NOT NULL AND phone = ?)', [member.email || null, member.phone || null]);
+            if (duplicate) throw new Error('العضو موجود بالفعل (البريد الإلكتروني أو الهاتف مكرر)');
+            const inserted = await this.run(`INSERT INTO members (name, phone, email, date_of_birth, gender, address, emergency_contact_name, emergency_contact_phone, medical_notes, membership_type, photo, join_date, status, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [member.name, member.phone || null, member.email || null, member.date_of_birth || null, member.gender || null, member.address || null, member.emergency_contact_name || null, member.emergency_contact_phone || null, member.medical_notes || null, member.membership_type || 'monthly', member.photo || null, member.join_date || new Date().toISOString(), member.status || 'active', user ? user.id : null]);
+            if (member.expiryDate) {
+                await this.run(`INSERT INTO subscriptions (member_id, plan, start_date, end_date, amount, status, created_by) VALUES (?, ?, ?, ?, ?, 'active', ?)`, [inserted.id, member.membership_type || 'monthly', member.join_date || new Date().toISOString(), member.expiryDate, Number(member.amount) || 0, user ? user.id : null]);
+            }
+            return inserted.id;
         });
     }
-
     async updateMember(id, member, user) {
         return new Promise((resolve, reject) => {
             const that = this;
@@ -921,6 +827,50 @@ class ImprovedDatabase {
         });
     }
 
+    async markNotificationRead(id, userId) {
+        return this.run('UPDATE notifications SET read_status = 1 WHERE id = ? AND user_id = ?', [id, userId]);
+    }
+
+    async getExpiringSubscriptions(user, days = 30) {
+        const safeDays = Math.max(0, Math.min(Number(days) || 30, 365));
+        const filter = user && user.role !== 'admin' ? 'AND m.created_by = ?' : '';
+        const params = [safeDays];
+        if (user && user.role !== 'admin') params.push(user.id);
+        return this.all(`SELECT s.*, m.name AS member_name, m.phone, m.email FROM subscriptions s JOIN members m ON m.id = s.member_id WHERE s.status = 'active' AND s.is_frozen = 0 AND date(s.end_date) BETWEEN date('now') AND date('now', '+' || ? || ' days') ${filter} ORDER BY date(s.end_date) ASC`, params);
+    }
+
+    async getSubscriptionSummary(user) {
+        const filter = user && user.role !== 'admin' ? 'AND m.created_by = ?' : '';
+        const params = user && user.role !== 'admin' ? [user.id] : [];
+        return this.all(`SELECT s.*, m.name AS member_name, m.phone, m.email, CASE WHEN date(s.end_date) < date('now') THEN 'expired' WHEN date(s.end_date) <= date('now', '+7 days') THEN 'expiring_soon' ELSE 'active' END AS lifecycle_status FROM subscriptions s JOIN members m ON m.id = s.member_id WHERE 1=1 ${filter} ORDER BY date(s.end_date) ASC`, params);
+    }
+
+    async freezeSubscription(subscriptionId, freezeUntil, user) {
+        if (!user || user.role !== 'admin') throw new Error('غير مصرح لك بتجميد الاشتراك');
+        if (!freezeUntil || Number.isNaN(new Date(freezeUntil).getTime())) throw new Error('تاريخ التجميد غير صالح');
+        return this.run('UPDATE subscriptions SET is_frozen = 1, freeze_start_date = CURRENT_TIMESTAMP, freeze_end_date = ?, status = \'frozen\', updated_at = CURRENT_TIMESTAMP WHERE id = ?', [freezeUntil, subscriptionId]);
+    }
+
+    async unfreezeSubscription(subscriptionId, user) {
+        if (!user || user.role !== 'admin') throw new Error('غير مصرح لك بإلغاء تجميد الاشتراك');
+        return this.run("UPDATE subscriptions SET is_frozen = 0, freeze_start_date = NULL, freeze_end_date = NULL, status = 'active', updated_at = CURRENT_TIMESTAMP WHERE id = ?", [subscriptionId]);
+    }
+
+    async generateSubscriptionNotifications(userId = null) {
+        const subscriptions = await this.all(`SELECT s.id, s.member_id, s.end_date, m.name AS member_name, m.created_by, m.email FROM subscriptions s JOIN members m ON m.id = s.member_id WHERE s.status = 'active' AND s.is_frozen = 0 AND date(s.end_date) <= date('now', '+30 days')`);
+        let created = 0;
+        for (const sub of subscriptions) {
+            const daysLeft = Math.ceil((new Date(sub.end_date).getTime() - Date.now()) / 86400000);
+            const type = daysLeft < 0 ? 'expired' : 'subscription_expiry';
+            const title = daysLeft < 0 ? 'Membership expired' : 'Membership renewal reminder';
+            const message = daysLeft < 0 ? `${sub.member_name} membership has expired.` : `${sub.member_name} membership expires in ${daysLeft} day(s).`;
+            const targetUser = userId || sub.created_by;
+            const existing = await this.getAsync("SELECT id FROM notifications WHERE user_id = ? AND member_id = ? AND type = ? AND date(created_at) = date('now')", [targetUser, sub.member_id, type]);
+            if (!existing && targetUser) { await this.addNotification({ user_id: targetUser, member_id: sub.member_id, title, message, type }); created++; }
+        }
+        return { created, checked: subscriptions.length };
+    }
+
     // دوال إدارة الإعدادات
     async getSetting(key) {
         return new Promise((resolve, reject) => {
@@ -990,6 +940,7 @@ class ImprovedDatabase {
     }
 
     all(sql, params = []) { return new Promise((resolve, reject) => this.db.all(sql, params, (err, rows) => err ? reject(err) : resolve(rows))); }
+    getAsync(sql, params = []) { return new Promise((resolve, reject) => this.db.get(sql, params, (err, row) => err ? reject(err) : resolve(row))); }
     run(sql, params = []) { return new Promise((resolve, reject) => this.db.run(sql, params, function(err) { err ? reject(err) : resolve({ id: this.lastID, changes: this.changes }); })); }
 
     async exportAllData() {

@@ -63,6 +63,10 @@ npm run test:coverage    # Coverage report
 
 Jest intentionally runs only `*.test.js` files. Playwright `*.spec.js` files are excluded from Jest and are executed through the dedicated E2E command.
 
+## User Guide
+
+Read the complete bilingual manual in [`docs/USER_GUIDE.md`](docs/USER_GUIDE.md). It covers installation, roles, monthly subscriptions, payments, attendance, automatic notifications, reports, backup, and troubleshooting in English and Arabic.
+
 ## Project structure
 
 ```text
