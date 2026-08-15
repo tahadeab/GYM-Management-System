@@ -48,6 +48,17 @@ class Helpers {
         return errors;
     }
 
+    // نموذج حالة واجهة موحد ثنائي اللغة للتدفقات المختلفة
+    static getBilingualState(type = 'empty', detail = '') {
+        const states = {
+            loading: { title: 'جاري التحميل / Loading', message: 'يرجى الانتظار أثناء جلب البيانات.' },
+            empty: { title: 'لا توجد بيانات / No data', message: detail || 'لا توجد سجلات متاحة حالياً.' },
+            success: { title: 'تمت العملية / Completed', message: detail || 'تم تنفيذ العملية بنجاح.' },
+            error: { title: 'تعذر إكمال العملية / Unable to complete', message: detail || 'حدث خطأ. حاول مرة أخرى.' }
+        };
+        return { type, ...(states[type] || states.error), retryLabel: 'إعادة المحاولة / Retry' };
+    }
+
     // إنشاء معرف فريد
     static generateId() {
         return Date.now().toString(36) + Math.random().toString(36).substr(2);

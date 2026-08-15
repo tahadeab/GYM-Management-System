@@ -475,12 +475,15 @@
                 </div>
             </div>
 
-            <div class="page-content" id="classes-page">
-                <!-- محتوى صفحة الحصص -->
+                        <div class="page-content" id="classes-page">
+                <div class="page-header"><h1 class="page-title">الحصص والقاعات / Classes & Rooms</h1><p class="page-subtitle">إدارة الجداول والمدربين والسعة وتوزيع القاعات / Manage schedules, trainers, capacity, and rooms</p><div class="header-actions"><button class="btn btn-primary" id="addClassBtn"><i class="fas fa-plus"></i> إضافة حصة / Add class</button></div></div>
+                <div class="stats-grid compact-grid"><div class="stat-card info"><div class="stat-content"><h3 class="stat-number" id="activeRoomsCount">0</h3><p class="stat-label">القاعات النشطة / Active rooms</p></div></div><div class="stat-card success"><div class="stat-content"><h3 class="stat-number" id="todayClassesCount">0</h3><p class="stat-label">حصص اليوم / Today’s classes</p></div></div></div>
+                <div class="table-card"><div class="section-header"><h3 class="section-title">جدول الحصص / Class schedule</h3><button class="btn btn-outline" id="refreshClassesBtn"><i class="fas fa-sync"></i> تحديث / Refresh</button></div><div id="classesTableContainer" class="workflow-state-container"><div class="dashboard-state"><i class="fas fa-calendar-alt"></i><strong>جاري تحميل الجدول / Loading schedule</strong><span>سيتم عرض الحصص والقاعات عند توفر البيانات.</span></div></div></div>
+                <div class="table-card"><div class="section-header"><h3 class="section-title">القاعات / Rooms</h3><button class="btn btn-outline" id="addRoomBtn"><i class="fas fa-door-open"></i> إضافة قاعة / Add room</button></div><div id="roomsTableContainer" class="workflow-state-container"><div class="dashboard-state"><i class="fas fa-door-open"></i><strong>لا توجد قاعات معروضة / No rooms displayed</strong><span>أضف القاعات لتفعيل جدولة أكثر دقة.</span></div></div></div>
             </div>
-
             <div class="page-content" id="equipment-page">
-                <!-- محتوى صفحة المعدات -->
+                <div class="page-header"><h1 class="page-title">المعدات / Equipment</h1><p class="page-subtitle">تتبع الحالة والصيانة والملاحظات التشغيلية / Track status, maintenance, and operational notes</p><div class="header-actions"><button class="btn btn-primary" id="addEquipmentBtn"><i class="fas fa-plus"></i> إضافة معدة / Add equipment</button></div></div>
+                <div class="table-card"><div class="section-header"><h3 class="section-title">سجل المعدات / Equipment register</h3><button class="btn btn-outline" id="refreshEquipmentBtn"><i class="fas fa-sync"></i> تحديث / Refresh</button></div><div id="equipmentTableContainer" class="workflow-state-container"><div class="dashboard-state"><i class="fas fa-dumbbell"></i><strong>لا توجد معدات معروضة / No equipment displayed</strong><span>أضف المعدات أو تحقّق من الاتصال بقاعدة البيانات.</span></div></div></div>
             </div>
 
             <div class="page-content" id="payments-page">
@@ -498,7 +501,7 @@
                     <h1 class="page-title">التقارير والإحصائيات</h1>
                     <p class="page-subtitle">تقارير شاملة وإحصائيات مفصلة</p>
                 </div>
-                <!-- محتوى صفحة التقارير -->
+                <div class="stats-grid compact-grid"><div class="stat-card warning"><div class="stat-content"><h3 class="stat-number" id="reportRevenueTotal">0</h3><p class="stat-label">الإيرادات / Revenue</p></div></div><div class="stat-card info"><div class="stat-content"><h3 class="stat-number" id="reportAttendanceTotal">0</h3><p class="stat-label">الحضور / Attendance</p></div></div><div class="stat-card success"><div class="stat-content"><h3 class="stat-number" id="reportExpiringTotal">0</h3><p class="stat-label">اشتراكات قاربت الانتهاء / Expiring subscriptions</p></div></div></div><div class="table-card"><div class="section-header"><h3 class="section-title">تحليل الأداء / Performance analysis</h3><button class="btn btn-primary" id="exportReportsBtn"><i class="fas fa-file-excel"></i> تصدير Excel / Export Excel</button></div><div id="reportsStateContainer" class="workflow-state-container"><div class="dashboard-state"><i class="fas fa-chart-line"></i><strong>جاري تحميل التقارير / Loading reports</strong><span>يتم تجميع الإيرادات والحضور والاشتراكات.</span></div></div></div>
             </div>
 
             <div class="page-content" id="settings-page">

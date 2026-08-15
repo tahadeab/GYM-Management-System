@@ -22,7 +22,7 @@ describe('Database Initialization and Connection', () => {
 
         const tables = [
             'users', 'members', 'trainers', 'subscriptions',
-            'attendance', 'payments', 'equipment', 'classes',
+            'attendance', 'payments', 'equipment', 'rooms', 'classes',
             'class_bookings', 'notifications', 'discounts',
             'activity_log', 'settings', 'workout_plans',
             'exercises', 'body_measurements'
@@ -32,6 +32,18 @@ describe('Database Initialization and Connection', () => {
             const count = await testHelper.countRecords(table);
             expect(count).toBeGreaterThanOrEqual(0);
         }
+    });
+
+    test('should create and link rooms to classes', async () => {
+        const db = await testHelper.createTestDatabase();
+        const admin = await testHelper.getUserByUsername('admin');
+        const room = await db.saveRoom({ name: 'Studio A', capacity: 30 }, admin);
+        expect(room.id).toBeGreaterThan(0);
+        const savedClass = await db.saveClass({ title: 'Strength Basics', room_id: room.id, capacity: 15 }, admin);
+        expect(savedClass.id).toBeGreaterThan(0);
+        const classes = await db.getClasses(admin);
+        expect(classes[0].room_name).toBe('Studio A');
+        await expect(db.deleteRoom(room.id, { role: 'staff' })).rejects.toThrow('Admin permission required');
     });
 
     test('should create default admin user', async () => {

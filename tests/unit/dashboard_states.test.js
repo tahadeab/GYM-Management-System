@@ -13,6 +13,15 @@ describe('Professional dashboard data states', () => {
     expect(source).toContain('لا توجد تنبيهات مهمة / No important alerts');
   });
 
+  test('includes concrete workflow surfaces beyond the dashboard shell', () => {
+    const html = fs.readFileSync(path.join(__dirname, '../../frontend/professional_dashboard.html'), 'utf8');
+    expect(html).toContain('classesTableContainer');
+    expect(html).toContain('roomsTableContainer');
+    expect(html).toContain('equipmentTableContainer');
+    expect(html).toContain('reportsStateContainer');
+    expect(html).toContain('Export Excel');
+  });
+
   test('renders bilingual error state with retry handling', () => {
     expect(source).toContain('تعذر تحميل البيانات / Unable to load data');
     expect(source).toContain('إعادة المحاولة / Retry');

@@ -13,7 +13,7 @@ This document records the functional parity status of the Electron desktop appli
 | Payments | Supported | Payment records, methods, revenue indicators, ownership checks, exports | Add refund/void workflow |
 | Attendance | Supported | Check-in/check-out, activity type, notes, latest visits | Add configurable attendance devices/integrations |
 | Trainers | Supported | Profiles, specialties, active state, relationships | Add availability calendar UI |
-| Rooms | Missing/partial | Web supports room-aware scheduling; Electron class records do not yet have a first-class rooms table and management screen | Add rooms schema, CRUD, conflict checks, and room selector |
+| Rooms | Partial | Electron now has a rooms table, CRUD service, class room_id linkage, room_name joins, and backup coverage | Add a dedicated room management screen and schedule conflict checks |
 | Classes | Partial | Class CRUD, trainer assignment, capacity, pricing, booking foundation | Add room assignment, recurrence, waitlist, and calendar view |
 | Personal training | Partial | Database and web support PT packages, assignments, sessions, and completion; Electron has no complete dedicated PT workflow | Add PT package/assignment/session screens and IPC services |
 | Reports | Partial | Dashboard KPIs, revenue/attendance trends, expiry indicators, export foundation | Add full report filters and parity-level Excel export screens |
@@ -34,4 +34,4 @@ npm run build
 npm run dist:win
 ```
 
-The current automated desktop suite passes **55 tests**. The dashboard state tests cover the bilingual state contract; browser-level DOM testing for all secondary screens remains a follow-up once those screens are migrated to the shared desktop shell.
+The current automated desktop suite passes **56 tests**. The dashboard state tests cover the bilingual state contract; browser-level DOM testing for all secondary screens remains a follow-up once those screens are migrated to the shared desktop shell.
