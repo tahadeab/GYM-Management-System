@@ -22,6 +22,19 @@ describe('Professional dashboard data states', () => {
     expect(html).toContain('Export Excel');
   });
 
+  test('contains actual report visualization and inline workflow actions', () => {
+    expect(source).toContain('renderReportCharts');
+    expect(source).toContain("draw('attendanceChart'");
+    expect(source).toContain("draw('equipmentChart'");
+    expect(source).toContain('reportRevenueTotal');
+    expect(source).toContain('reportAttendanceTotal');
+    expect(source).toContain('reportExpiringTotal');
+    expect(source).toContain('updateReportSummary');
+    expect(source).toContain('element.textContent = String(value)');
+    expect(source).toContain('exportWorkflowReport');
+    expect(source).not.toContain('window.prompt(');
+  });
+
   test('renders bilingual error state with retry handling', () => {
     expect(source).toContain('تعذر تحميل البيانات / Unable to load data');
     expect(source).toContain('إعادة المحاولة / Retry');

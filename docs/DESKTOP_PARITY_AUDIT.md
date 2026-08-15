@@ -34,4 +34,4 @@ npm run build
 npm run dist:win
 ```
 
-The current automated desktop suite passes **56 tests**. The dashboard state tests cover the bilingual state contract; browser-level DOM testing for all secondary screens remains a follow-up once those screens are migrated to the shared desktop shell.
+The current automated desktop suite passes **63 tests**. The dashboard state tests cover the bilingual state contract; browser-level DOM testing for all secondary screens remains a follow-up once those screens are migrated to the shared desktop shell.

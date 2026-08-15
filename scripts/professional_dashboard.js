@@ -125,12 +125,26 @@ class ProfessionalDashboard {
         const exportReportsButton = document.getElementById('exportReportsBtn');
         if (exportReportsButton) exportReportsButton.addEventListener('click', () => this.exportWorkflowReport());
         const addRoomButton = document.getElementById('addRoomBtn');
-        if (addRoomButton) addRoomButton.addEventListener('click', () => this.createWorkflowRecord('room'));
+        if (addRoomButton) addRoomButton.addEventListener('click', () => this.focusWorkflowForm('room'));
         const addEquipmentButton = document.getElementById('addEquipmentBtn');
-        if (addEquipmentButton) addEquipmentButton.addEventListener('click', () => this.createWorkflowRecord('equipment'));
-        const addClassButton = document.getElementById('addClassBtn');
-        if (addClassButton) addClassButton.addEventListener('click', () => this.createWorkflowRecord('class'));
-
+        if (addEquipmentButton) addEquipmentButton.addEventListener('click', () => this.focusWorkflowForm('equipment'));
+                const addClassButton = document.getElementById('addClassBtn');
+        if (addClassButton) addClassButton.addEventListener('click', () => this.focusWorkflowForm('class'));
+        const bindSubmit = (id, handler) => { const form = document.getElementById(id); if (form) form.addEventListener('submit', event => { event.preventDefault(); handler(); }); };
+        bindSubmit('roomForm', () => this.submitWorkflowForm('room'));
+        bindSubmit('classForm', () => this.submitWorkflowForm('class'));
+        bindSubmit('equipmentForm', () => this.submitWorkflowForm('equipment'));
+        ['cancelRoomEditBtn', 'cancelClassEditBtn', 'cancelEquipmentEditBtn'].forEach(id => {
+            const button = document.getElementById(id);
+            if (button) button.addEventListener('click', () => this.resetWorkflowForm(id.replace('cancel', '').replace('EditBtn', '').toLowerCase()));
+        });
+        ['classSearchInput', 'classStatusFilter', 'roomSearchInput', 'equipmentSearchInput', 'equipmentStatusFilter'].forEach(id => {
+            const input = document.getElementById(id);
+            if (input) input.addEventListener('input', () => this.applyWorkflowFilters());
+            if (input) input.addEventListener('change', () => this.applyWorkflowFilters());
+        });
+        const reportRange = document.getElementById('reportRangeSelect');
+        if (reportRange) reportRange.addEventListener('change', () => this.loadWorkflowPageData('reports'));
         // إغلاق القوائم المنسدلة عند النقر خارجها
         document.addEventListener('click', (e) => {
             this.handleOutsideClick(e);
@@ -846,23 +860,25 @@ class ProfessionalDashboard {
         const loaders = {
             classes: async () => {
                 const [classes, rooms] = await Promise.all([api.getClasses(), api.getRooms()]);
-                this.renderWorkflowTable('classesTableContainer', classes, ['title', 'trainer_name', 'room_name', 'capacity']);
-                this.renderWorkflowTable('roomsTableContainer', rooms, ['name', 'capacity', 'status']);
+                this.workflowRecords = { ...(this.workflowRecords || {}), classes, rooms };
+                this.renderWorkflowTable('classesTableContainer', classes, ['title', 'trainer_name', 'room_name', 'capacity'], 'class');
+                this.renderWorkflowTable('roomsTableContainer', rooms, ['name', 'capacity', 'status'], 'room');
                 const roomsCount = document.getElementById('activeRoomsCount');
                 const classesCount = document.getElementById('todayClassesCount');
                 if (roomsCount) roomsCount.textContent = rooms.filter(room => room.status !== 'inactive').length;
                 if (classesCount) classesCount.textContent = classes.length;
             },
-            equipment: async () => this.renderWorkflowTable('equipmentTableContainer', await api.getEquipment(), ['name', 'category', 'status', 'quantity']),
+            equipment: async () => {
+                const equipment = await api.getEquipment();
+                this.workflowRecords = { ...(this.workflowRecords || {}), equipment };
+                this.renderWorkflowTable('equipmentTableContainer', equipment, ['name', 'manufacturer', 'status', 'next_maintenance'], 'equipment');
+            },
             reports: async () => {
-                const reports = await api.getReports();
-                const revenue = document.getElementById('reportRevenueTotal');
-                const attendance = document.getElementById('reportAttendanceTotal');
-                const expiring = document.getElementById('reportExpiringTotal');
-                if (revenue) revenue.textContent = reports?.revenue ?? reports?.totalRevenue ?? 0;
-                if (attendance) attendance.textContent = reports?.attendance ?? reports?.totalAttendance ?? 0;
-                if (expiring) expiring.textContent = reports?.expiringSubscriptions ?? 0;
+                const range = Number(document.getElementById('reportRangeSelect')?.value || 30);
+                const reports = await api.getReports(range);
+                this.updateReportSummary(reports);
                 this.renderWorkflowTable('reportsStateContainer', Array.isArray(reports) ? reports : [], ['label', 'value']);
+                this.renderReportCharts(reports);
             }
         };
         const load = loaders[page];
@@ -877,26 +893,106 @@ class ProfessionalDashboard {
         }
     }
 
-    async createWorkflowRecord(type) {
-        const prompts = {
-            room: ['اسم القاعة / Room name', 'السعة / Capacity'],
-            equipment: ['اسم المعدة / Equipment name', 'الحالة / Status'],
-            class: ['اسم الحصة / Class title', 'الجدول / Schedule']
-        };
-        const values = prompts[type].map(label => window.prompt(label));
-        if (!values[0]) return;
+    focusWorkflowForm(type, record = null) {
+        const prefix = type === 'class' ? 'class' : type;
+        const form = document.getElementById(`${prefix}Form`);
+        if (!form) return;
+        if (record) {
+            Object.entries(record).forEach(([key, value]) => {
+                const field = document.getElementById(`${prefix}${key.charAt(0).toUpperCase()}${key.slice(1)}`);
+                if (field) field.value = value ?? '';
+            });
+        }
+        form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        form.querySelector('input:not([type="hidden"])')?.focus();
+    }
+
+    resetWorkflowForm(type) {
+        const form = document.getElementById(`${type}Form`);
+        if (!form) return;
+        form.reset();
+        const id = document.getElementById(`${type}Id`);
+        if (id) id.value = '';
+    }
+
+    async submitWorkflowForm(type) {
         const api = window.api;
+        const value = id => document.getElementById(id)?.value?.trim() || '';
+        const id = Number(value(`${type}Id`)) || undefined;
+        const payloads = {
+            room: { id, name: value('roomName'), capacity: Number(value('roomCapacity')) || 20, status: value('roomStatus') || 'active' },
+            class: { id, title: value('classTitle'), schedule: value('classSchedule') || null, capacity: Number(value('classCapacity')) || 20, status: 'active' },
+            equipment: { id, name: value('equipmentName'), manufacturer: value('equipmentManufacturer') || null, status: value('equipmentStatus') || 'operational' }
+        };
+        const payload = payloads[type];
+        if (!payload?.name && !payload?.title) return;
         try {
             this.showToast('جاري الحفظ / Saving...', 'info');
-            if (type === 'room') await api.saveRoom({ name: values[0], capacity: Number(values[1]) || 20, status: 'active' });
-            if (type === 'equipment') await api.saveEquipment({ name: values[0], status: values[1] || 'operational' });
-            if (type === 'class') await api.saveClass({ title: values[0], schedule: values[1] || null, status: 'active' });
+            if (type === 'room') await api.saveRoom(payload);
+            if (type === 'class') await api.saveClass(payload);
+            if (type === 'equipment') await api.saveEquipment(payload);
+            this.resetWorkflowForm(type);
             this.showToast('تم الحفظ بنجاح / Saved successfully', 'success');
-            await this.loadWorkflowPageData(type === 'room' || type === 'class' ? 'classes' : 'equipment');
+            await this.loadWorkflowPageData(type === 'equipment' ? 'equipment' : 'classes');
         } catch (error) {
             console.error(`Failed to save ${type}`, error);
             this.showToast('تعذر الحفظ / Save failed', 'error');
         }
+    }
+
+    async deleteWorkflowRecord(type, id) {
+        if (!id || !window.confirm('تأكيد الحذف / Confirm deletion?')) return;
+        try {
+            if (type === 'room') await window.api.deleteRoom(id);
+            if (type === 'class') await window.api.deleteClass(id);
+            if (type === 'equipment') await window.api.deleteEquipment(id);
+            this.showToast('تم الحذف / Deleted successfully', 'success');
+            await this.loadWorkflowPageData(type === 'equipment' ? 'equipment' : 'classes');
+        } catch (error) {
+            console.error(`Failed to delete ${type}`, error);
+            this.showToast('تعذر الحذف / Delete failed', 'error');
+        }
+    }
+
+    applyWorkflowFilters() {
+        const records = this.workflowRecords || {};
+        const classQuery = document.getElementById('classSearchInput')?.value?.toLowerCase() || '';
+        const classStatus = document.getElementById('classStatusFilter')?.value || '';
+        const equipmentQuery = document.getElementById('equipmentSearchInput')?.value?.toLowerCase() || '';
+        const equipmentStatus = document.getElementById('equipmentStatusFilter')?.value || '';
+        const roomQuery = document.getElementById('roomSearchInput')?.value?.toLowerCase() || '';
+        if (records.classes) this.renderWorkflowTable('classesTableContainer', records.classes.filter(row => `${row.title || ''} ${row.trainer_name || ''} ${row.room_name || ''}`.toLowerCase().includes(classQuery) && (!classStatus || row.status === classStatus)), ['title', 'trainer_name', 'room_name', 'capacity'], 'class');
+        if (records.rooms) this.renderWorkflowTable('roomsTableContainer', records.rooms.filter(row => `${row.name || ''}`.toLowerCase().includes(roomQuery)), ['name', 'capacity', 'status'], 'room');
+        if (records.equipment) this.renderWorkflowTable('equipmentTableContainer', records.equipment.filter(row => `${row.name || ''} ${row.manufacturer || ''}`.toLowerCase().includes(equipmentQuery) && (!equipmentStatus || row.status === equipmentStatus)), ['name', 'manufacturer', 'status', 'next_maintenance'], 'equipment');
+    }
+
+    updateReportSummary(reports = {}) {
+        const values = {
+            reportRevenueTotal: reports?.revenue ?? reports?.totalRevenue ?? 0,
+            reportAttendanceTotal: reports?.attendance ?? reports?.totalAttendance ?? 0,
+            reportExpiringTotal: reports?.expiringSubscriptions ?? reports?.expiring?.length ?? 0
+        };
+        Object.entries(values).forEach(([id, value]) => {
+            const element = document.getElementById(id);
+            if (element) element.textContent = String(value);
+        });
+        return values;
+    }
+    renderReportCharts(reports = {}) {
+        const draw = (id, values, label) => {
+            const container = document.getElementById(id);
+            if (!container) return;
+            const rows = Array.isArray(values) ? values.slice(-14) : [];
+            const max = Math.max(...rows.map(row => Number(row.total) || 0), 1);
+            container.innerHTML = rows.length ? rows.map(row => `<div class="bar-item" title="${this.escapeHtml(row.day || row.name || '')}"><span class="bar-label">${this.escapeHtml(row.day || row.name || label)}</span><span class="bar-track"><i style="width:${Math.round(((Number(row.total) || 0) / max) * 100)}%"></i></span><b>${Number(row.total) || 0}</b></div>`).join('') : '<div class="dashboard-state"><strong>لا توجد بيانات / No data</strong></div>';
+        };
+        draw('attendanceChart', reports.attendance, 'Attendance');
+        draw('equipmentChart', reports.equipment || reports.equipmentUsage, 'Equipment');
+    }
+
+    createWorkflowRecord(type) {
+        this.focusWorkflowForm(type);
+        this.showToast('استخدم النموذج المباشر / Use the inline form', 'info');
     }
 
     async exportWorkflowReport() {
@@ -935,16 +1031,24 @@ class ProfessionalDashboard {
         if (button) button.addEventListener('click', retry, { once: true });
     }
 
-    renderWorkflowTable(containerId, rows, fields) {
+    renderWorkflowTable(containerId, rows, fields, type = null) {
         const container = document.getElementById(containerId);
         if (!container) return;
         if (!Array.isArray(rows) || rows.length === 0) {
             container.innerHTML = '<div class="dashboard-state"><i class="fas fa-inbox"></i><strong>لا توجد بيانات / No data</strong><span>لا توجد سجلات متاحة حالياً / No records are currently available</span></div>';
             return;
         }
-        const headers = fields.map(field => `<th>${field.replaceAll('_', ' ')}</th>`).join('');
-        const body = rows.slice(0, 100).map(row => `<tr>${fields.map(field => `<td>${this.escapeHtml(row?.[field] ?? '—')}</td>`).join('')}</tr>`).join('');
+        const headers = fields.map(field => `<th>${field.replaceAll('_', ' ')}</th>`).join('') + (type ? '<th>إجراءات / Actions</th>' : '');
+        const body = rows.slice(0, 100).map(row => {
+            const actions = type ? `<td class="row-actions"><button class="btn btn-outline btn-sm js-edit-row" data-type="${type}" data-id="${row.id}">تحرير / Edit</button><button class="btn btn-danger btn-sm js-delete-row" data-type="${type}" data-id="${row.id}">حذف / Delete</button></td>` : '';
+            return `<tr>${fields.map(field => `<td>${this.escapeHtml(row?.[field] ?? '—')}</td>`).join('')}${actions}</tr>`;
+        }).join('');
         container.innerHTML = `<div class="table-responsive"><table class="data-table"><thead><tr>${headers}</tr></thead><tbody>${body}</tbody></table></div>`;
+        container.querySelectorAll('.js-edit-row').forEach(button => button.addEventListener('click', () => {
+            const record = (this.workflowRecords?.[`${button.dataset.type}s`] || []).find(item => String(item.id) === button.dataset.id);
+            this.focusWorkflowForm(button.dataset.type, record);
+        }));
+        container.querySelectorAll('.js-delete-row').forEach(button => button.addEventListener('click', () => this.deleteWorkflowRecord(button.dataset.type, Number(button.dataset.id))));
     }
 
     escapeHtml(value) {
