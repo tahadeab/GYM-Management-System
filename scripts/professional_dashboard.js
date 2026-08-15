@@ -161,7 +161,8 @@ class ProfessionalDashboard {
 
         } catch (error) {
             console.error('خطأ في تحميل بيانات لوحة التحكم:', error);
-            this.showToast('فشل في تحميل بعض البيانات', 'warning');
+            this.renderDashboardErrorState();
+            this.showToast('فشل في تحميل بعض البيانات / Some data failed to load', 'error');
         } finally {
             this.showLoading(false);
         }
@@ -531,8 +532,23 @@ class ProfessionalDashboard {
         this.notifications = [];
     }
 
+    renderCollectionState(container, { icon = 'fa-inbox', title, message, error = false, retry = false } = {}) {
+        if (!container) return;
+        const state = document.createElement('div');
+        state.className = `dashboard-state ${error ? 'dashboard-state-error' : ''}`;
+        state.setAttribute('role', error ? 'alert' : 'status');
+        state.innerHTML = `
+            <i class="fas ${icon}" aria-hidden="true"></i>
+            <strong>${title}</strong>
+            <span>${message}</span>
+            ${retry ? '<button type="button" class="dashboard-state-retry">إعادة المحاولة / Retry</button>' : ''}
+        `;
+        if (retry) state.querySelector('button').addEventListener('click', () => this.refreshDashboardData());
+        container.appendChild(state);
+    }
+
     updateNotifications(notifications) {
-        this.notifications = notifications;
+        this.notifications = Array.isArray(notifications) ? notifications : [];
         this.renderNotifications();
         this.updateNotificationBadge();
     }
@@ -542,6 +558,14 @@ class ProfessionalDashboard {
         if (!container) return;
 
         container.innerHTML = '';
+        if (this.notifications.length === 0) {
+            this.renderCollectionState(container, {
+                icon: 'fa-bell-slash',
+                title: 'لا توجد إشعارات / No notifications',
+                message: 'ستظهر التنبيهات الجديدة هنا عند توفرها.'
+            });
+            return;
+        }
 
         this.notifications.forEach(notification => {
             const notificationElement = this.createNotificationElement(notification);
@@ -626,6 +650,14 @@ class ProfessionalDashboard {
         if (!container) return;
 
         container.innerHTML = '';
+        if (this.activities.length === 0) {
+            this.renderCollectionState(container, {
+                icon: 'fa-clock',
+                title: 'لا توجد أنشطة حديثة / No recent activity',
+                message: 'ستظهر عمليات النادي الأخيرة هنا.'
+            });
+            return;
+        }
 
         this.activities.forEach(activity => {
             const activityElement = this.createActivityElement(activity);
@@ -683,6 +715,14 @@ class ProfessionalDashboard {
         if (!container) return;
 
         container.innerHTML = '';
+        if (this.alerts.length === 0) {
+            this.renderCollectionState(container, {
+                icon: 'fa-circle-check',
+                title: 'لا توجد تنبيهات مهمة / No important alerts',
+                message: 'لا توجد عناصر تتطلب انتباهك حالياً.'
+            });
+            return;
+        }
 
         this.alerts.forEach(alert => {
             const alertElement = this.createAlertElement(alert);
@@ -717,6 +757,21 @@ class ProfessionalDashboard {
         div.appendChild(actionBtn);
 
         return div;
+    }
+
+    renderDashboardErrorState() {
+        ['recentActivities', 'notificationList', 'importantAlerts'].forEach(id => {
+            const container = document.getElementById(id);
+            if (!container) return;
+            container.innerHTML = '';
+            this.renderCollectionState(container, {
+                icon: 'fa-triangle-exclamation',
+                title: 'تعذر تحميل البيانات / Unable to load data',
+                message: 'تحقق من اتصال قاعدة البيانات ثم أعد المحاولة.',
+                error: true,
+                retry: true
+            });
+        });
     }
 
     updateAlertsCount() {
@@ -915,14 +970,35 @@ class ProfessionalDashboard {
 
     showLoading(show) {
         const loadingBar = document.getElementById('loadingBar');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+
         if (show) {
-            loadingBar.classList.add('show');
-            loadingBar.querySelector('.loading-progress').style.width = '100%';
+            if (loadingBar) {
+                loadingBar.classList.add('show');
+                const progress = loadingBar.querySelector('.loading-progress');
+                if (progress) progress.style.width = '100%';
+            }
+            if (loadingOverlay) {
+                loadingOverlay.classList.add('show');
+                loadingOverlay.setAttribute('aria-hidden', 'false');
+                const title = document.getElementById('loadingTitle');
+                const message = document.getElementById('loadingMessage');
+                if (title) title.textContent = 'جاري تحميل بيانات النظام';
+                if (message) message.textContent = 'لحظات من فضلك... / Please wait...';
+            }
         } else {
-            setTimeout(() => {
-                loadingBar.classList.remove('show');
-                loadingBar.querySelector('.loading-progress').style.width = '0%';
-            }, 500);
+            const hide = () => {
+                if (loadingBar) {
+                    loadingBar.classList.remove('show');
+                    const progress = loadingBar.querySelector('.loading-progress');
+                    if (progress) progress.style.width = '0%';
+                }
+                if (loadingOverlay) {
+                    loadingOverlay.classList.remove('show');
+                    loadingOverlay.setAttribute('aria-hidden', 'true');
+                }
+            };
+            window.setTimeout(hide, 300);
         }
     }
 
