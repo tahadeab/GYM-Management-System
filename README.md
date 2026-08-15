@@ -32,7 +32,7 @@ Install Node.js 20 or newer and npm. The application targets Windows, macOS, and
 ## Installation
 
 ```bash
-git clone https://github.com/tahadeab/GYM_SYSTEM-2.0.git
+git clone https://github.com/tahadeab/GYM-Management-System.git
 cd GYM_SYSTEM-2.0
 npm install
 ```
