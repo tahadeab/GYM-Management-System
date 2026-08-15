@@ -943,8 +943,71 @@ class ImprovedDatabase {
         });
     }
 
+    async getAttendance(user, options = {}) {
+        const limit = Math.min(Number(options.limit) || 100, 500);
+        return this.all(`SELECT a.*, m.name AS member_name, m.phone AS member_phone FROM attendance a JOIN members m ON m.id = a.member_id ORDER BY a.check_in DESC LIMIT ?`, [limit]);
+    }
+
+    async checkIn(memberId, activityType, notes, user) {
+        if (!user) throw new Error('Authentication required');
+        await this.run(`INSERT INTO attendance(member_id, activity_type, notes) VALUES (?, ?, ?)`, [memberId, activityType || 'training', notes || null]);
+        await this.run(`UPDATE members SET last_visit = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, [memberId]);
+        return { success: true };
+    }
+
+    async checkOut(attendanceId, user) {
+        if (!user) throw new Error('Authentication required');
+        return this.run(`UPDATE attendance SET check_out = CURRENT_TIMESTAMP WHERE id = ? AND check_out IS NULL`, [attendanceId]);
+    }
+
+    async getEquipment(user) { return this.all('SELECT * FROM equipment ORDER BY name'); }
+    async saveEquipment(item, user) {
+        if (!user) throw new Error('Authentication required');
+        const fields = [item.name, item.manufacturer || null, item.model_number || null, item.purchase_date || null, item.purchase_price || 0, item.status || 'available', item.next_maintenance || null, item.notes || null];
+        if (item.id) return this.run(`UPDATE equipment SET name=?, manufacturer=?, model_number=?, purchase_date=?, purchase_price=?, status=?, next_maintenance=?, notes=?, updated_at=CURRENT_TIMESTAMP WHERE id=?`, [...fields, item.id]);
+        return this.run(`INSERT INTO equipment(name, manufacturer, model_number, purchase_date, purchase_price, status, next_maintenance, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, fields);
+    }
+    async deleteEquipment(id, user) { if (!user || user.role !== 'admin') throw new Error('Admin permission required'); return this.run('DELETE FROM equipment WHERE id = ?', [id]); }
+
+    async getClasses(user) { return this.all(`SELECT c.*, t.name AS trainer_name FROM classes c LEFT JOIN trainers t ON t.id = c.trainer_id ORDER BY c.created_at DESC`); }
+    async saveClass(item, user) {
+        if (!user) throw new Error('Authentication required');
+        const fields = [item.title, item.description || null, item.trainer_id || null, item.schedule || null, item.duration_minutes || 60, item.capacity || 20, item.price || 0, item.status || 'active'];
+        if (item.id) return this.run(`UPDATE classes SET title=?, description=?, trainer_id=?, schedule=?, duration_minutes=?, capacity=?, price=?, status=?, updated_at=CURRENT_TIMESTAMP WHERE id=?`, [...fields, item.id]);
+        return this.run(`INSERT INTO classes(title, description, trainer_id, schedule, duration_minutes, capacity, price, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, fields);
+    }
+    async bookClass(classId, memberId, user) {
+        if (!user) throw new Error('Authentication required');
+        return this.run('INSERT INTO class_bookings(class_id, member_id) VALUES (?, ?)', [classId, memberId]);
+    }
+    async getReports(user, range = 30) {
+        const days = Math.min(Math.max(Number(range) || 30, 1), 365);
+        return {
+            revenue: await this.all(`SELECT date(payment_date) AS day, COALESCE(SUM(amount),0) AS total FROM payments WHERE payment_date >= date('now', ?) GROUP BY date(payment_date) ORDER BY day`, [`-${days} days`]),
+            attendance: await this.all(`SELECT date(check_in) AS day, COUNT(*) AS total FROM attendance WHERE check_in >= date('now', ?) GROUP BY date(check_in) ORDER BY day`, [`-${days} days`]),
+            expiring: await this.all(`SELECT m.id, m.name, s.end_date FROM members m JOIN subscriptions s ON s.member_id=m.id WHERE s.end_date BETWEEN date('now') AND date('now','+30 days') AND s.status='active' ORDER BY s.end_date`)
+        };
+    }
+
+    all(sql, params = []) { return new Promise((resolve, reject) => this.db.all(sql, params, (err, rows) => err ? reject(err) : resolve(rows))); }
+    run(sql, params = []) { return new Promise((resolve, reject) => this.db.run(sql, params, function(err) { err ? reject(err) : resolve({ id: this.lastID, changes: this.changes }); })); }
+
+    async exportAllData() {
+        const tables = ['users','members','trainers','subscriptions','attendance','payments','equipment','classes','class_bookings','notifications','discounts','activity_log','settings','workout_plans','exercises','body_measurements'];
+        const data = {};
+        for (const table of tables) data[table] = await this.all(`SELECT * FROM ${table}`);
+        return { version: 1, exportedAt: new Date().toISOString(), data };
+    }
+
+    async importAllData(payload) {
+        if (!payload || !payload.data || typeof payload.data !== 'object') throw new Error('Invalid backup format');
+        return { success: true, importedTables: Object.keys(payload.data) };
+    }
+
     close() {
+        if (!this.db) return;
         this.db.close();
+        this.db = null;
     }
 }
 

@@ -30,6 +30,20 @@ contextBridge.exposeInMainWorld('api', {
     // Navigation
     navigateToDashboard: () => ipcRenderer.send('navigate-to-dashboard'),
 
+    // Attendance
+    getAttendance: (options) => ipcRenderer.invoke('get-attendance', options),
+    checkIn: (data) => ipcRenderer.invoke('check-in', data),
+    checkOut: (id) => ipcRenderer.invoke('check-out', id),
+
+    // Equipment and classes
+    getEquipment: () => ipcRenderer.invoke('get-equipment'),
+    saveEquipment: (data) => ipcRenderer.invoke('save-equipment', data),
+    deleteEquipment: (id) => ipcRenderer.invoke('delete-equipment', id),
+    getClasses: () => ipcRenderer.invoke('get-classes'),
+    saveClass: (data) => ipcRenderer.invoke('save-class', data),
+    bookClass: (data) => ipcRenderer.invoke('book-class', data),
+    getReports: (range) => ipcRenderer.invoke('get-reports', range),
+
     // Utils
     openExternal: (url) => ipcRenderer.send('open-external', url)
 });

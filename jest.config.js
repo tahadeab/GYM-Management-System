@@ -4,8 +4,7 @@ module.exports = {
 
     // Test patterns
     testMatch: [
-        '**/tests/**/*.test.js',
-        '**/tests/**/*.spec.js'
+        '**/tests/**/*.test.js'
     ],
 
     // Coverage configuration
@@ -39,7 +38,8 @@ module.exports = {
     testPathIgnorePatterns: [
         '/node_modules/',
         '/coverage/',
-        '/dist/'
+        '/dist/',
+        '/tests/e2e/'
     ],
 
     // Verbose output

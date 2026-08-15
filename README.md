@@ -1,245 +1,103 @@
-# نظام إدارة الجيم المتطور
+# Gym Management System
 
-## نظرة عامة
+A professional, privacy-first desktop gym management system built with Electron, Node.js, and SQLite. The application is designed for gyms, fitness studios, sports clubs, and multi-branch fitness operations that need reliable member, payment, attendance, trainer, class, equipment, and reporting workflows in one place.
 
-نظام شامل ومتطور لإدارة الأندية الرياضية والجيمات، مصمم خصيصاً للبيئة العربية مع دعم كامل للغة العربية والتخطيط من اليمين إلى اليسار (RTL).
+> **Bilingual by design:** the application supports both **Arabic and English**, including RTL/LTR layout switching. The selected language is stored locally and restored on the next launch.
 
-## الميزات الرئيسية
+## Core capabilities
 
-### 🔐 نظام المصادقة والأمان
-- تسجيل دخول آمن مع تشفير كلمات المرور
-- إدارة الجلسات مع انتهاء صلاحية تلقائي
-- مستويات صلاحيات متعددة (مدير، موظف، مدرب)
-- تسجيل جميع العمليات والأنشطة
+| Area | Included capabilities |
+|---|---|
+| Authentication | Secure password hashing, role-based access control, session-aware IPC, admin and staff roles |
+| Members | Member profiles, contact and emergency information, medical notes, membership status, subscription dates, search and filtering |
+| Subscriptions | New subscriptions, renewals, expiry tracking, payment-linked subscription updates |
+| Payments | Payment history, payment methods, revenue dashboard metrics, staff ownership controls |
+| Attendance | Check-in/check-out records, activity type, notes, latest visits, attendance reporting |
+| Trainers | Trainer profiles, specialties, contact information, status, ownership-aware CRUD |
+| Classes | Class scheduling records, trainer assignment, capacity, pricing, and member bookings |
+| Equipment | Equipment inventory, purchase information, status, maintenance dates, notes, admin deletion controls |
+| Dashboard | Member, trainer, payment, attendance, revenue, and expiry indicators |
+| Reports | Revenue trends, attendance trends, and subscriptions expiring within 30 days |
+| Data protection | SQLite persistence in the operating system user-data directory, JSON export foundation, activity-oriented schema |
+| UI and accessibility | Responsive desktop layout, Arabic RTL support, English LTR support, dark mode assets, toast feedback |
 
-### 👥 إدارة الأعضاء
-- إضافة وتعديل وحذف الأعضاء
-- تتبع تفاصيل العضوية والاشتراكات
-- إدارة الصور الشخصية
-- معلومات الطوارئ والملاحظات الطبية
-- تصدير واستيراد بيانات الأعضاء
-- فلترة وبحث متقدم
+## Technology stack
 
-### 🏋️ إدارة المدربين
-- ملفات شخصية شاملة للمدربين
-- جدولة الحصص والمواعيد
-- تتبع التخصصات والشهادات
-- إدارة الرواتب والعمولات
+The project uses Electron 37, Node.js, SQLite3, bcryptjs, Chart.js, jsPDF, XLSX, DOMPurify, Jest, and Playwright. The renderer runs with `nodeIntegration: false` and `contextIsolation: true`; renderer features communicate through a controlled preload API.
 
-### 📊 لوحة التحكم التفاعلية
-- إحصائيات شاملة ومؤشرات الأداء
-- رسوم بيانية تفاعلية
-- تنبيهات ذكية
-- تحديث البيانات في الوقت الفعلي
+## Requirements
 
-### 💰 إدارة المدفوعات
-- تسجيل جميع أنواع المدفوعات
-- تتبع المستحقات والديون
-- تقارير مالية مفصلة
-- إشعارات استحقاق الدفع
+Install Node.js 20 or newer and npm. The application is intended for Windows, macOS, and Linux. A minimum 4 GB of RAM and 500 MB of free disk space is recommended for a small single-site installation.
 
-### 📅 نظام الحضور
-- تسجيل دخول وخروج الأعضاء
-- تتبع أوقات التدريب
-- تقارير الحضور والغياب
-- إحصائيات الاستخدام
+## Installation
 
-### 🔔 نظام الإشعارات
-- إشعارات انتهاء العضوية
-- تنبيهات المدفوعات المستحقة
-- إشعارات الصيانة
-- رسائل نصية وبريد إلكتروني
-
-### 📈 التقارير والتحليلات
-- تقارير مالية شاملة
-- تحليل أداء الأعضاء
-- إحصائيات الحضور
-- تقارير قابلة للتخصيص
-
-## متطلبات النظام
-
-### الحد الأدنى
-- نظام التشغيل: Windows 10, macOS 10.14, Ubuntu 18.04
-- الذاكرة: 4 GB RAM
-- مساحة القرص: 500 MB
-- الشاشة: 1366x768
-
-### الموصى به
-- نظام التشغيل: Windows 11, macOS 12+, Ubuntu 20.04+
-- الذاكرة: 8 GB RAM
-- مساحة القرص: 2 GB
-- الشاشة: 1920x1080 أو أعلى
-
-## التثبيت والإعداد
-
-### 1. تثبيت Node.js
-قم بتحميل وتثبيت Node.js من الموقع الرسمي:
-```
-https://nodejs.org/
-```
-
-### 2. تثبيت التبعيات
 ```bash
+git clone https://github.com/tahadeab/GYM_SYSTEM-2.0.git
+cd GYM_SYSTEM-2.0
 npm install
 ```
 
-### 3. تشغيل النظام
+For first-run configuration, copy `.env.example` to `.env` and set `ADMIN_PASSWORD` to a strong, private password. If it is omitted, the database creates a temporary random administrator password and prints a security warning; change it immediately after the first login.
+
+## Running the application
+
 ```bash
 npm start
 ```
 
-## بيانات تسجيل الدخول الافتراضية
+To serve the static files for a quick UI inspection:
 
-### المدير العام
-- اسم المستخدم: `admin`
-- كلمة المرور: `admin123`
-
-### الموظف
-- اسم المستخدم: `employee`
-- كلمة المرور: `emp123`
-
-**⚠️ تأكد من تغيير كلمات المرور الافتراضية فور التثبيت**
-
-## دليل الاستخدام
-
-### تسجيل الدخول
-1. افتح التطبيق
-2. أدخل اسم المستخدم وكلمة المرور
-3. انقر على "تسجيل الدخول"
-
-### إضافة عضو جديد
-1. انتقل إلى قسم "الأعضاء"
-2. انقر على "إضافة عضو جديد"
-3. املأ البيانات المطلوبة
-4. انقر على "حفظ"
-
-### تسجيل دفعة
-1. انتقل إلى قسم "المدفوعات"
-2. انقر على "تسجيل دفعة جديدة"
-3. اختر العضو ونوع الدفعة
-4. أدخل المبلغ وانقر على "حفظ"
-
-### إنشاء تقرير
-1. انتقل إلى قسم "التقارير"
-2. اختر نوع التقرير المطلوب
-3. حدد الفترة الزمنية
-4. انقر على "إنشاء التقرير"
-
-## النسخ الاحتياطي والاستعادة
-
-### إنشاء نسخة احتياطية
-1. من قائمة "ملف" اختر "تصدير البيانات"
-2. اختر مكان الحفظ
-3. انقر على "حفظ"
-
-### استعادة النسخة الاحتياطية
-1. من قائمة "ملف" اختر "استيراد البيانات"
-2. اختر ملف النسخة الاحتياطية
-3. انقر على "استيراد"
-
-## الأمان والخصوصية
-
-### حماية البيانات
-- تشفير جميع كلمات المرور
-- حماية قاعدة البيانات من الوصول غير المصرح
-- تسجيل جميع العمليات للمراجعة
-
-### النسخ الاحتياطي التلقائي
-- يُنصح بإنشاء نسخة احتياطية يومية
-- حفظ النسخ في مكان آمن منفصل
-- اختبار استعادة النسخ دورياً
-
-## استكشاف الأخطاء وإصلاحها
-
-### مشاكل شائعة
-
-#### لا يمكن تسجيل الدخول
-- تأكد من صحة اسم المستخدم وكلمة المرور
-- تحقق من انتهاء صلاحية الجلسة
-- أعد تشغيل التطبيق
-
-#### بطء في الأداء
-- أغلق التطبيقات الأخرى غير الضرورية
-- تأكد من توفر مساحة كافية على القرص
-- أعد تشغيل الجهاز
-
-#### خطأ في قاعدة البيانات
-- تأكد من وجود ملف قاعدة البيانات
-- تحقق من صلاحيات الوصول للملفات
-- استعد من نسخة احتياطية حديثة
-
-### الحصول على المساعدة
-- راجع هذا الدليل أولاً
-- تحقق من ملف السجلات للأخطاء
-- تواصل مع فريق الدعم الفني
-
-## التحديثات والصيانة
-
-### التحديثات التلقائية
-- يتحقق النظام من التحديثات عند بدء التشغيل
-- يتم إشعارك عند توفر تحديثات جديدة
-- يُنصح بتثبيت التحديثات فور توفرها
-
-### الصيانة الدورية
-- إنشاء نسخة احتياطية أسبوعية
-- تنظيف ملفات السجلات القديمة
-- مراجعة صلاحيات المستخدمين
-- تحديث كلمات المرور دورياً
-
-## المواصفات التقنية
-
-### التقنيات المستخدمة
-- **Frontend**: HTML5, CSS3, JavaScript (ES6+)
-- **Backend**: Node.js, Electron
-- **Database**: SQLite3
-- **UI Framework**: Custom CSS with RTL support
-- **Charts**: Chart.js
-- **Icons**: Font Awesome
-
-### بنية المشروع
-```
-نظام جيم/
-├── main.js                 # الملف الرئيسي
-├── package.json           # تبعيات المشروع
-├── database/              # ملفات قاعدة البيانات
-│   ├── improved_db.js     # وحدة قاعدة البيانات
-│   └── gym.db            # ملف قاعدة البيانات
-├── frontend/              # ملفات الواجهة الأمامية
-│   ├── improved_login.html
-│   ├── improved_dashboard.html
-│   ├── members.html
-│   └── notifications.html
-├── scripts/               # ملفات JavaScript
-│   ├── improved_login.js
-│   ├── improved_dashboard.js
-│   ├── members.js
-│   └── helpers.js
-├── styles/                # ملفات CSS
-│   ├── improved_login.css
-│   ├── improved_dashboard.css
-│   └── members.css
-└── assets/                # الصور والملفات الثابتة
-    └── gym-logo.png
+```bash
+npm run web
 ```
 
-## الترخيص والحقوق
+## Testing and quality checks
 
-هذا النظام مطور خصيصاً لإدارة الأندية الرياضية والجيمات. جميع الحقوق محفوظة.
+```bash
+npm test                 # Jest unit and integration tests
+npm run test:e2e         # Playwright Electron end-to-end tests
+npm run lint             # ESLint validation
+npm run check            # JavaScript syntax validation
+npm run test:coverage    # Coverage report
+```
 
-## معلومات الإصدار
+Jest intentionally runs only `*.test.js` files. Playwright `*.spec.js` files are excluded from Jest and are executed through the dedicated E2E command.
 
-- **الإصدار**: 2.0.0
-- **تاريخ الإصدار**: 2024
-- **آخر تحديث**: ديسمبر 2024
+## Project structure
 
-## الدعم الفني
+```text
+.
+├── main.js                       # Electron main process and IPC handlers
+├── preload.js                    # Secure renderer API bridge
+├── database/improved_db.js       # SQLite schema, business logic, RBAC, reporting
+├── frontend/                     # Login and dashboard HTML pages
+├── scripts/                      # UI controllers and bilingual runtime
+├── styles/                       # Page styles and language-switcher styles
+├── assets/                       # Branding and interface assets
+├── tests/                        # Unit, integration, and Playwright tests
+└── package.json                  # Commands and dependencies
+```
 
-للحصول على الدعم الفني أو الإبلاغ عن مشاكل:
-- راجع قسم "استكشاف الأخطاء وإصلاحها"
-- تحقق من ملفات السجلات
-- تواصل مع فريق التطوير
+## Security notes
 
----
+Passwords are hashed with bcryptjs and should never be committed to source control. The SQLite database is created under Electron's `userData` directory rather than inside the repository. External links are restricted to HTTP and HTTPS, and renderer access to Node.js is disabled. Production deployments should additionally use signed installers, encrypted backups, a private `.env` file, and a documented restore test.
 
-**ملاحظة**: هذا النظام مصمم خصيصاً للبيئة العربية ويدعم اللغة العربية بالكامل مع التخطيط من اليمين إلى اليسار (RTL).
+## Data and backup guidance
 
+Use the application's export action to create a JSON backup before upgrades or migration. Store backups outside the application directory and test restoration periodically. Never commit `*.db`, `.env`, generated reports, or customer data to GitHub.
+
+## Default access
+
+For security, no permanent password is documented in this repository. Set `ADMIN_PASSWORD` before first launch. The application may generate a one-time temporary password when the variable is missing.
+
+## Contributing
+
+Create a feature branch, keep changes focused, run the syntax check and relevant tests, and open a pull request with a clear description of the user workflow affected. Do not include real customer data, database files, credentials, or private screenshots.
+
+## License
+
+This project is provided for educational and operational customization. Add an organization-specific open-source license before public redistribution.
+
+## Maintainer
+
+Maintained by **tahadeab** with a bilingual product direction for international gym operations.

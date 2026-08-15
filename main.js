@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, ipcMain, dialog, shell } = require('electron');
+const { app, BrowserWindow, Menu, dialog, shell, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
 require('dotenv').config();
@@ -350,13 +350,20 @@ class GymManagementApp {
 
         // معالجة الإحصائيات
         ipcMain.handle('get-dashboard-stats', async () => {
-            try {
-                return await db.getDashboardStats(this.currentUser);
-            } catch (error) {
-                console.error('خطأ في جلب إحصائيات لوحة التحكم:', error);
-                throw error;
-            }
+            if (!this.currentUser) throw new Error('Authentication required');
+            return db.getDashboardStats(this.currentUser);
         });
+
+        ipcMain.handle('get-attendance', async (event, options) => db.getAttendance(this.currentUser, options));
+        ipcMain.handle('check-in', async (event, data) => db.checkIn(data.memberId, data.activityType, data.notes, this.currentUser));
+        ipcMain.handle('check-out', async (event, id) => db.checkOut(id, this.currentUser));
+        ipcMain.handle('get-equipment', async () => db.getEquipment(this.currentUser));
+        ipcMain.handle('save-equipment', async (event, data) => db.saveEquipment(data, this.currentUser));
+        ipcMain.handle('delete-equipment', async (event, id) => db.deleteEquipment(id, this.currentUser));
+        ipcMain.handle('get-classes', async () => db.getClasses(this.currentUser));
+        ipcMain.handle('save-class', async (event, data) => db.saveClass(data, this.currentUser));
+        ipcMain.handle('book-class', async (event, data) => db.bookClass(data.classId, data.memberId, this.currentUser));
+        ipcMain.handle('get-reports', async (event, range) => db.getReports(this.currentUser, range));
 
         // معالجة التنقل
         ipcMain.on('navigate-to-dashboard', () => {
