@@ -154,6 +154,19 @@ class ImprovedDatabase {
                 )
             `);
 
+            // جدول القاعات المحسن
+            this.db.run(`
+                CREATE TABLE IF NOT EXISTS rooms (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL UNIQUE,
+                    capacity INTEGER DEFAULT 20,
+                    status TEXT DEFAULT 'active',
+                    notes TEXT,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+            `);
+
             // جدول الحصص المحسن
             this.db.run(`
                 CREATE TABLE IF NOT EXISTS classes (
@@ -161,6 +174,7 @@ class ImprovedDatabase {
                     title TEXT NOT NULL,
                     description TEXT,
                     trainer_id INTEGER,
+                    room_id INTEGER,
                     schedule TEXT,
                     duration_minutes INTEGER DEFAULT 60,
                     capacity INTEGER DEFAULT 20,
@@ -171,8 +185,9 @@ class ImprovedDatabase {
                     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (trainer_id) REFERENCES trainers (id)
                 )
-            `);
-
+                        `);
+            // توافق قواعد البيانات القديمة التي أُنشئت قبل إضافة rooms
+            this.db.run('ALTER TABLE classes ADD COLUMN room_id INTEGER', () => {});
             // جدول حجوزات الحصص
             this.db.run(`
                 CREATE TABLE IF NOT EXISTS class_bookings (
@@ -919,12 +934,27 @@ class ImprovedDatabase {
     }
     async deleteEquipment(id, user) { if (!user || user.role !== 'admin') throw new Error('Admin permission required'); return this.run('DELETE FROM equipment WHERE id = ?', [id]); }
 
-    async getClasses(user) { return this.all(`SELECT c.*, t.name AS trainer_name FROM classes c LEFT JOIN trainers t ON t.id = c.trainer_id ORDER BY c.created_at DESC`); }
+    async getRooms(user) { return this.all(`SELECT * FROM rooms ORDER BY name ASC`); }
+    async saveRoom(item, user) {
+        if (!user) throw new Error('Authentication required');
+        const fields = [item.name, item.capacity || 20, item.status || 'active', item.notes || null];
+        if (item.id) return this.run(`UPDATE rooms SET name=?, capacity=?, status=?, notes=?, updated_at=CURRENT_TIMESTAMP WHERE id=?`, [...fields, item.id]);
+        return this.run(`INSERT INTO rooms(name, capacity, status, notes) VALUES (?, ?, ?, ?)`, fields);
+    }
+    async deleteRoom(id, user) {
+        if (!user || user.role !== 'admin') throw new Error('Admin permission required');
+        return this.run('DELETE FROM rooms WHERE id = ?', [id]);
+    }
+    async getClasses(user) { return this.all(`SELECT c.*, t.name AS trainer_name, r.name AS room_name FROM classes c LEFT JOIN trainers t ON t.id = c.trainer_id LEFT JOIN rooms r ON r.id = c.room_id ORDER BY c.created_at DESC`); }
     async saveClass(item, user) {
         if (!user) throw new Error('Authentication required');
-        const fields = [item.title, item.description || null, item.trainer_id || null, item.schedule || null, item.duration_minutes || 60, item.capacity || 20, item.price || 0, item.status || 'active'];
-        if (item.id) return this.run(`UPDATE classes SET title=?, description=?, trainer_id=?, schedule=?, duration_minutes=?, capacity=?, price=?, status=?, updated_at=CURRENT_TIMESTAMP WHERE id=?`, [...fields, item.id]);
-        return this.run(`INSERT INTO classes(title, description, trainer_id, schedule, duration_minutes, capacity, price, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, fields);
+        const fields = [item.title, item.description || null, item.trainer_id || null, item.room_id || null, item.schedule || null, item.duration_minutes || 60, item.capacity || 20, item.price || 0, item.status || 'active'];
+        if (item.id) return this.run(`UPDATE classes SET title=?, description=?, trainer_id=?, room_id=?, schedule=?, duration_minutes=?, capacity=?, price=?, status=?, updated_at=CURRENT_TIMESTAMP WHERE id=?`, [...fields, item.id]);
+        return this.run(`INSERT INTO classes(title, description, trainer_id, room_id, schedule, duration_minutes, capacity, price, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`, fields);
+    }
+    async deleteClass(id, user) {
+        if (!user || user.role !== 'admin') throw new Error('Admin permission required');
+        return this.run('DELETE FROM classes WHERE id = ?', [id]);
     }
     async bookClass(classId, memberId, user) {
         if (!user) throw new Error('Authentication required');
@@ -935,7 +965,8 @@ class ImprovedDatabase {
         return {
             revenue: await this.all(`SELECT date(payment_date) AS day, COALESCE(SUM(amount),0) AS total FROM payments WHERE payment_date >= date('now', ?) GROUP BY date(payment_date) ORDER BY day`, [`-${days} days`]),
             attendance: await this.all(`SELECT date(check_in) AS day, COUNT(*) AS total FROM attendance WHERE check_in >= date('now', ?) GROUP BY date(check_in) ORDER BY day`, [`-${days} days`]),
-            expiring: await this.all(`SELECT m.id, m.name, s.end_date FROM members m JOIN subscriptions s ON s.member_id=m.id WHERE s.end_date BETWEEN date('now') AND date('now','+30 days') AND s.status='active' ORDER BY s.end_date`)
+            expiring: await this.all(`SELECT m.id, m.name, s.end_date FROM members m JOIN subscriptions s ON s.member_id=m.id WHERE s.end_date BETWEEN date('now') AND date('now','+30 days') AND s.status='active' ORDER BY s.end_date`),
+            equipment: await this.all(`SELECT status AS name, COUNT(*) AS total FROM equipment GROUP BY status ORDER BY total DESC`)
         };
     }
 
@@ -944,7 +975,7 @@ class ImprovedDatabase {
     run(sql, params = []) { return new Promise((resolve, reject) => this.db.run(sql, params, function(err) { err ? reject(err) : resolve({ id: this.lastID, changes: this.changes }); })); }
 
     async exportAllData() {
-        const tables = ['users','members','trainers','subscriptions','attendance','payments','equipment','classes','class_bookings','notifications','discounts','activity_log','settings','workout_plans','exercises','body_measurements'];
+        const tables = ['users','members','trainers','rooms','subscriptions','attendance','payments','equipment','classes','class_bookings','notifications','discounts','activity_log','settings','workout_plans','exercises','body_measurements'];
         const data = {};
         for (const table of tables) data[table] = await this.all(`SELECT * FROM ${table}`);
         return { version: 1, exportedAt: new Date().toISOString(), data };

@@ -52,6 +52,7 @@ contextBridge.exposeInMainWorld('api', {
     deleteRoom: (id) => ipcRenderer.invoke('delete-room', id),
     getClasses: () => ipcRenderer.invoke('get-classes'),
     saveClass: (data) => ipcRenderer.invoke('save-class', data),
+    deleteClass: (id) => ipcRenderer.invoke('delete-class', id),
     bookClass: (data) => ipcRenderer.invoke('book-class', data),
     getReports: (range) => ipcRenderer.invoke('get-reports', range),
 
