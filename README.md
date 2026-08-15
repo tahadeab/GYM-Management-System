@@ -1,33 +1,33 @@
-# Gym Management System
+# PulseForge Gym Management Desktop
 
-A professional, privacy-first desktop gym management system built with Electron, Node.js, and SQLite. The application is designed for gyms, fitness studios, sports clubs, and multi-branch fitness operations that need reliable member, payment, attendance, trainer, class, equipment, and reporting workflows in one place.
+> **Important:** This repository is the legacy Electron/Desktop application. Its `npm run web` command is only a static UI inspection server and is not the modern React web dashboard. If that command shows a welcome message with one button, the behavior is expected for this legacy repository. The full web dashboard is maintained separately at [`tahadeab/Gym-Management-Web`](https://github.com/tahadeab/Gym-Management-Web).
 
-> **Bilingual by design:** the application supports both **Arabic and English**, including RTL/LTR layout switching. The selected language is stored locally and restored on the next launch.
+PulseForge Gym Management Desktop is a privacy-first Electron application for gyms, fitness studios, sports clubs, and multi-branch operations. It stores operational data locally in SQLite and provides bilingual staff workflows for members, subscriptions, payments, attendance, trainers, classes, equipment, reports, exports, and notifications.
 
-## Core capabilities
+The application supports **English/LTR** and **Arabic/RTL**. The selected language is persisted locally and restored on the next launch.
+
+## Capabilities
 
 | Area | Included capabilities |
 |---|---|
-| Authentication | Secure password hashing, role-based access control, session-aware IPC, admin and staff roles |
-| Members | Member profiles, contact and emergency information, medical notes, membership status, subscription dates, search and filtering |
-| Subscriptions | New subscriptions, renewals, expiry tracking, payment-linked subscription updates |
-| Payments | Payment history, payment methods, revenue dashboard metrics, staff ownership controls |
-| Attendance | Check-in/check-out records, activity type, notes, latest visits, attendance reporting |
-| Trainers | Trainer profiles, specialties, contact information, status, ownership-aware CRUD |
-| Classes | Class scheduling records, trainer assignment, capacity, pricing, and member bookings |
-| Equipment | Equipment inventory, purchase information, status, maintenance dates, notes, admin deletion controls |
-| Dashboard | Member, trainer, payment, attendance, revenue, and expiry indicators |
-| Reports | Revenue trends, attendance trends, and subscriptions expiring within 30 days |
-| Data protection | SQLite persistence in the operating system user-data directory, JSON export foundation, activity-oriented schema |
-| UI and accessibility | Responsive desktop layout, Arabic RTL support, English LTR support, dark mode assets, toast feedback |
+| Access control | Password hashing, admin/staff roles, session-aware IPC, and controlled renderer access |
+| Members | Profiles, contact and emergency details, medical notes, status, search, and filtering |
+| Subscriptions | New subscriptions, renewals, expiry tracking, and payment-linked updates |
+| Payments | Payment history, methods, revenue metrics, and staff ownership controls |
+| Attendance | Check-in/check-out, activity type, notes, latest visits, and reporting |
+| Trainers | Profiles, specialties, contact data, active status, and relationship views |
+| Classes | Scheduling, trainer assignment, capacity, pricing, and member bookings |
+| Equipment | Inventory, purchase information, status, maintenance dates, notes, and admin controls |
+| Reports | Revenue trends, attendance trends, subscription expiry indicators, and export foundation |
+| Interface | Responsive desktop layout, bilingual labels, RTL/LTR switching, dark-mode assets, and toast feedback |
 
-## Technology stack
+## Technology and security model
 
-The project uses Electron 37, Node.js, SQLite3, bcryptjs, Chart.js, jsPDF, XLSX, DOMPurify, Jest, and Playwright. The renderer runs with `nodeIntegration: false` and `contextIsolation: true`; renderer features communicate through a controlled preload API.
+The application uses Electron 37, Node.js, SQLite3, bcryptjs, Chart.js, jsPDF, XLSX, DOMPurify, Jest, and Playwright. The renderer runs with `nodeIntegration: false` and `contextIsolation: true`; renderer actions communicate through the controlled preload bridge. The SQLite database is created in Electron's operating-system user-data directory rather than inside the repository.
 
 ## Requirements
 
-Install Node.js 20 or newer and npm. The application is intended for Windows, macOS, and Linux. A minimum 4 GB of RAM and 500 MB of free disk space is recommended for a small single-site installation.
+Install Node.js 20 or newer and npm. The application targets Windows, macOS, and Linux. For a small single-site installation, at least 4 GB RAM and 500 MB free disk space are recommended.
 
 ## Installation
 
@@ -37,71 +37,100 @@ cd GYM_SYSTEM-2.0
 npm install
 ```
 
-For first-run configuration, copy `.env.example` to `.env` and set `ADMIN_PASSWORD` to a strong, private password. If it is omitted, the database creates a temporary random administrator password and prints a security warning; change it immediately after the first login.
+For first-run configuration, copy `.env.example` to `.env` when the file is available and set `ADMIN_PASSWORD` to a strong private password. If no password is supplied, the database may create a temporary random administrator password and print a warning; change it immediately after first login. Never commit `.env`, database files, backups, generated reports, or customer data.
 
-## Running the application
+## Running
 
 ```bash
 npm start
 ```
 
-To serve the static files for a quick UI inspection:
+For a quick static UI inspection only:
 
 ```bash
 npm run web
 ```
 
+The `web` command serves the legacy repository's static files on port 8080 and is intentionally not the full web application. On Windows, if Python is not installed, the fallback command may use the Python Microsoft Store alias and still serve the existing static files; this does not install or launch the modern web dashboard. To run the full web dashboard, clone [`tahadeab/Gym-Management-Web`](https://github.com/tahadeab/Gym-Management-Web), install pnpm, and run `pnpm install` followed by `pnpm dev`.
+
+## Windows PowerShell troubleshooting
+
+Use `Get-Location` and `Get-ChildItem` first to confirm which repository is open. If the path is `GYM-Management-System`, you are in the legacy Electron/Desktop project. Running `npm run web` there intentionally serves a small static inspection page on port 8080; a welcome message with one button is not the modern dashboard.
+
+```powershell
+# Legacy Electron/Desktop app
+cd D:\path\to\GYM-Management-System
+npm install
+npm start
+
+# Modern React Web/PWA app
+cd D:\path\to\Gym-Management-Web
+pnpm install
+pnpm dev
+```
+
+If PowerShell reports `Python was not found`, Windows could not resolve the `python3` command used by the legacy static-server fallback. This warning does not indicate that Electron or the modern web application is installed incorrectly. Stop the static server with `Ctrl+C`, switch to `Gym-Management-Web`, and run `pnpm dev`. Install Python only if you specifically need the legacy static inspection command.
+
 ## Testing and quality checks
 
 ```bash
-npm test                 # Jest unit and integration tests
-npm run test:e2e         # Playwright Electron end-to-end tests
-npm run lint             # ESLint validation
-npm run check            # JavaScript syntax validation
-npm run test:coverage    # Coverage report
+npm test
+npm run test:unit
+npm run test:integration
+npm run test:e2e
+npm run check
+npm run lint
+npm run test:coverage
 ```
 
-Jest intentionally runs only `*.test.js` files. Playwright `*.spec.js` files are excluded from Jest and are executed through the dedicated E2E command.
+Jest runs the unit and integration JavaScript tests. Playwright tests use the dedicated `test:e2e` command. The syntax check validates the main process, preload bridge, database code, and script files. The complete bilingual user manual is available at [`docs/USER_GUIDE.md`](docs/USER_GUIDE.md).
 
-## User Guide
+## Data, export, and backup
 
-Read the complete bilingual manual in [`docs/USER_GUIDE.md`](docs/USER_GUIDE.md). It covers installation, roles, monthly subscriptions, payments, attendance, automatic notifications, reports, backup, and troubleshooting in English and Arabic.
+Use the application export action to create a JSON backup before upgrades or migrations. Store backups outside the application directory and test restoration periodically. Do not place real customer records in GitHub or issue trackers. Production installations should use signed installers, encrypted backups, a private environment file, and a documented restore test.
 
-## Project structure
+## Project layout
 
 ```text
-.
-├── main.js                       # Electron main process and IPC handlers
-├── preload.js                    # Secure renderer API bridge
-├── database/improved_db.js       # SQLite schema, business logic, RBAC, reporting
-├── frontend/                     # Login and dashboard HTML pages
-├── scripts/                      # UI controllers and bilingual runtime
-├── styles/                       # Page styles and language-switcher styles
-├── assets/                       # Branding and interface assets
-├── tests/                        # Unit, integration, and Playwright tests
-└── package.json                  # Commands and dependencies
+main.js                       Electron main process and IPC handlers
+preload.js                    Secure renderer API bridge
+database/improved_db.js       SQLite schema, business logic, RBAC, and reporting
+frontend/                     Login and dashboard pages
+scripts/                      UI controllers and bilingual runtime
+styles/                       Page styles and language-switcher styles
+assets/                       Branding and interface assets
+tests/                        Unit, integration, and Playwright tests
+docs/USER_GUIDE.md            Complete bilingual user guide
 ```
 
-## Security notes
+## Release procedure and current packaging status
 
-Passwords are hashed with bcryptjs and should never be committed to source control. The SQLite database is created under Electron's `userData` directory rather than inside the repository. External links are restricted to HTTP and HTTPS, and renderer access to Node.js is disabled. Production deployments should additionally use signed installers, encrypted backups, a private `.env` file, and a documented restore test.
+The repository currently provides a source-based Electron release workflow and does not define an installer or distributable package script in `package.json`. For a controlled source release, install dependencies with `npm ci` or `npm install`, set a private `ADMIN_PASSWORD`, run `npm run check`, `npm test`, and the relevant Playwright checks, then distribute the reviewed repository through the organization's approved release channel. If Windows, macOS, or Linux installers are required, add and review a signed Electron Builder or Electron Forge pipeline before publishing end-user binaries; no installer is claimed by this repository at this time.
 
-## Data and backup guidance
+## Final verification notes
 
-Use the application's export action to create a JSON backup before upgrades or migration. Store backups outside the application directory and test restoration periodically. Never commit `*.db`, `.env`, generated reports, or customer data to GitHub.
+The final validation completed the JavaScript syntax check and all 53 Jest tests. The test environment correctly reports a security warning when `ADMIN_PASSWORD` is absent and generates a temporary administrator password for development. Production operators must set a strong private `ADMIN_PASSWORD` before first launch and change any temporary password immediately. The web and mobile projects have separate README files and MIT licenses, while mobile bearer-token entry and native push notification delivery remain transitional deployment concerns described in the mobile documentation.
 
-## Default access
+## Arabic summary
 
-For security, no permanent password is documented in this repository. Set `ADMIN_PASSWORD` before first launch. The application may generate a one-time temporary password when the variable is missing.
+PulseForge Gym Management Desktop هو تطبيق سطح مكتب احترافي مبني على Electron وNode.js وSQLite لإدارة الجيم. يدعم الأعضاء والاشتراكات والمدفوعات والحضور والمدربين والحصص والمعدات والتقارير والتصدير والتنبيهات، مع دعم كامل للعربية باتجاه RTL والإنجليزية باتجاه LTR.
 
-## Contributing
+تُخزن قاعدة البيانات محلياً داخل مجلد بيانات Electron، ويجب إجراء نسخ احتياطية واختبار استعادتها قبل أي ترقية. يحتوي مجلد `docs` على دليل استخدام ثنائي اللغة.
 
-Create a feature branch, keep changes focused, run the syntax check and relevant tests, and open a pull request with a clear description of the user workflow affected. Do not include real customer data, database files, credentials, or private screenshots.
+## Related modern applications
+
+| Application | Repository | Correct local command |
+|---|---|---|
+| Legacy Electron/Desktop | [`GYM-management-system`](https://github.com/tahadeab/GYM-management-system) | `npm start` |
+| Modern React Web/PWA | [`Gym-Management-Web`](https://github.com/tahadeab/Gym-Management-Web) | `pnpm dev` |
+| Expo Mobile companion | [`gym-management-mobile`](https://github.com/tahadeab/gym-management-mobile) | `npx expo start` |
+
+Do not run `npm run web` from this repository when you expect the full React dashboard; it is only a static inspection command.
 
 ## License
 
-This project is provided for educational and operational customization. Add an organization-specific open-source license before public redistribution.
+This project is distributed under the MIT License. See [`LICENSE`](./LICENSE).
 
 ## Maintainer
 
-Maintained by **tahadeab** with a bilingual product direction for international gym operations.
+Maintained by **taha deab**.
