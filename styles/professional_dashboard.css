@@ -1336,3 +1336,11 @@ body.dark-mode .dashboard-state-error strong { color: #fca5a5; }
 .bar-track { height: 10px; overflow: hidden; border-radius: var(--border-radius-full); background: var(--gray-200); }
 .bar-track i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--primary-color), var(--secondary-color)); }
 @media (max-width: 900px) { .workflow-form, .report-chart-grid { grid-template-columns: 1fr; } }
+
+.workflow-save-status { display:inline-flex; align-items:center; min-height:2rem; padding:.35rem .65rem; border-radius:999px; color:var(--gray-600); background:var(--gray-100); font-size:.78rem; transition:color .18s ease, background .18s ease; }
+.workflow-save-status[data-tone="pending"] { color:#9a6700; background:#fff7d6; }
+.workflow-save-status[data-tone="saved"], .workflow-save-status[data-tone="success"] { color:#166534; background:#dcfce7; }
+.workflow-save-status[data-tone="restored"] { color:#1d4ed8; background:#dbeafe; }
+.workflow-save-status[data-tone="error"] { color:#b91c1c; background:#fee2e2; }
+@media (max-width:720px) { .workflow-save-status { width:100%; justify-content:center; } }
+@media (prefers-reduced-motion:reduce) { .workflow-save-status { transition:none; } }

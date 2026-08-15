@@ -6,8 +6,9 @@ class ProfessionalDashboard {
         this.activities = [];
         this.alerts = [];
         this.charts = {};
-        this.isLoading = false;
-
+                this.isLoading = false;
+        this.autosaveTimers = {};
+        this.workflowDraftKeyPrefix = 'pulseforge.workflowDraft.';
         this.init();
     }
 
@@ -138,6 +139,7 @@ class ProfessionalDashboard {
             const button = document.getElementById(id);
             if (button) button.addEventListener('click', () => this.resetWorkflowForm(id.replace('cancel', '').replace('EditBtn', '').toLowerCase()));
         });
+        this.setupWorkflowAutosave();
         ['classSearchInput', 'classStatusFilter', 'roomSearchInput', 'equipmentSearchInput', 'equipmentStatusFilter'].forEach(id => {
             const input = document.getElementById(id);
             if (input) input.addEventListener('input', () => this.applyWorkflowFilters());
@@ -893,6 +895,72 @@ class ProfessionalDashboard {
         }
     }
 
+    setupWorkflowAutosave() {
+        ['class', 'room', 'equipment'].forEach(type => {
+            const form = document.getElementById(`${type}Form`);
+            if (!form) return;
+            this.restoreWorkflowDraft(type);
+            form.addEventListener('input', () => this.scheduleWorkflowDraft(type));
+            form.addEventListener('change', () => this.scheduleWorkflowDraft(type));
+        });
+    }
+    getWorkflowFormSnapshot(type) {
+        const fields = {
+            room: ['roomId', 'roomName', 'roomCapacity', 'roomStatus'],
+            class: ['classId', 'classTitle', 'classSchedule', 'classCapacity'],
+            equipment: ['equipmentId', 'equipmentName', 'equipmentManufacturer', 'equipmentStatus']
+        }[type] || [];
+        return fields.reduce((snapshot, id) => {
+            const element = document.getElementById(id);
+            snapshot[id] = element?.value ?? '';
+            return snapshot;
+        }, {});
+    }
+    setWorkflowSaveStatus(type, text, tone = '') {
+        const element = document.getElementById(`${type}SaveStatus`);
+        if (!element) return;
+        element.textContent = text;
+        element.dataset.tone = tone;
+    }
+    scheduleWorkflowDraft(type) {
+        clearTimeout(this.autosaveTimers[type]);
+        this.setWorkflowSaveStatus(type, 'جارٍ تجهيز المسودة / Draft pending', 'pending');
+        this.autosaveTimers[type] = setTimeout(() => this.saveWorkflowDraft(type), 650);
+    }
+    saveWorkflowDraft(type) {
+        const snapshot = this.getWorkflowFormSnapshot(type);
+        const hasContent = Object.entries(snapshot).some(([key, value]) => key !== `${type}Id` && String(value).trim());
+        if (!hasContent) {
+            this.clearWorkflowDraft(type);
+            this.setWorkflowSaveStatus(type, 'جاهز / Ready');
+            return;
+        }
+        try {
+            localStorage.setItem(`${this.workflowDraftKeyPrefix}${type}`, JSON.stringify({ ...snapshot, savedAt: Date.now() }));
+            this.setWorkflowSaveStatus(type, 'تم حفظ المسودة تلقائياً / Draft autosaved', 'saved');
+        } catch (error) {
+            console.warn(`Unable to autosave ${type} draft`, error);
+            this.setWorkflowSaveStatus(type, 'تعذر حفظ المسودة / Draft unavailable', 'error');
+        }
+    }
+    restoreWorkflowDraft(type) {
+        try {
+            const raw = localStorage.getItem(`${this.workflowDraftKeyPrefix}${type}`);
+            if (!raw) return;
+            const snapshot = JSON.parse(raw);
+            Object.entries(snapshot).forEach(([id, value]) => {
+                if (id === 'savedAt') return;
+                const element = document.getElementById(id);
+                if (element && !element.value) element.value = value ?? '';
+            });
+            this.setWorkflowSaveStatus(type, 'تم استرجاع المسودة / Draft restored', 'restored');
+        } catch (error) {
+            console.warn(`Unable to restore ${type} draft`, error);
+        }
+    }
+    clearWorkflowDraft(type) {
+        try { localStorage.removeItem(`${this.workflowDraftKeyPrefix}${type}`); } catch (error) { console.warn(`Unable to clear ${type} draft`, error); }
+    }
     focusWorkflowForm(type, record = null) {
         const prefix = type === 'class' ? 'class' : type;
         const form = document.getElementById(`${prefix}Form`);
@@ -913,6 +981,8 @@ class ProfessionalDashboard {
         form.reset();
         const id = document.getElementById(`${type}Id`);
         if (id) id.value = '';
+        this.clearWorkflowDraft(type);
+        this.setWorkflowSaveStatus(type, 'جاهز / Ready');
     }
 
     async submitWorkflowForm(type) {
@@ -933,6 +1003,7 @@ class ProfessionalDashboard {
             if (type === 'equipment') await api.saveEquipment(payload);
             this.resetWorkflowForm(type);
             this.showToast('تم الحفظ بنجاح / Saved successfully', 'success');
+            this.setWorkflowSaveStatus(type, 'تم التأكيد والحفظ / Confirmed and saved', 'success');
             await this.loadWorkflowPageData(type === 'equipment' ? 'equipment' : 'classes');
         } catch (error) {
             console.error(`Failed to save ${type}`, error);
