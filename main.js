@@ -370,6 +370,9 @@ class GymManagementApp {
         ipcMain.handle('get-equipment', async () => db.getEquipment(this.currentUser));
         ipcMain.handle('save-equipment', async (event, data) => db.saveEquipment(data, this.currentUser));
         ipcMain.handle('delete-equipment', async (event, id) => db.deleteEquipment(id, this.currentUser));
+        ipcMain.handle('get-rooms', async () => db.getRooms(this.currentUser));
+        ipcMain.handle('save-room', async (event, data) => db.saveRoom(data, this.currentUser));
+        ipcMain.handle('delete-room', async (event, id) => db.deleteRoom(id, this.currentUser));
         ipcMain.handle('get-classes', async () => db.getClasses(this.currentUser));
         ipcMain.handle('save-class', async (event, data) => db.saveClass(data, this.currentUser));
         ipcMain.handle('book-class', async (event, data) => db.bookClass(data.classId, data.memberId, this.currentUser));

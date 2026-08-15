@@ -26,5 +26,8 @@ describe('Professional dashboard data states', () => {
     expect(source).toContain('تعذر تحميل البيانات / Unable to load data');
     expect(source).toContain('إعادة المحاولة / Retry');
     expect(source).toContain('renderDashboardErrorState');
+    expect(source).toContain('loadWorkflowPageData');
+    expect(source).toContain('renderWorkflowError');
+    expect(source).toContain('escapeHtml');
   });
 });

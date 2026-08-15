@@ -118,6 +118,19 @@ class ProfessionalDashboard {
             this.exportDashboardReport();
         });
 
+        ['classes', 'equipment', 'reports'].forEach(page => {
+            const refreshButton = document.getElementById(`refresh${page.charAt(0).toUpperCase()}${page.slice(1)}Btn`);
+            if (refreshButton) refreshButton.addEventListener('click', () => this.loadWorkflowPageData(page));
+        });
+        const exportReportsButton = document.getElementById('exportReportsBtn');
+        if (exportReportsButton) exportReportsButton.addEventListener('click', () => this.exportWorkflowReport());
+        const addRoomButton = document.getElementById('addRoomBtn');
+        if (addRoomButton) addRoomButton.addEventListener('click', () => this.createWorkflowRecord('room'));
+        const addEquipmentButton = document.getElementById('addEquipmentBtn');
+        if (addEquipmentButton) addEquipmentButton.addEventListener('click', () => this.createWorkflowRecord('equipment'));
+        const addClassButton = document.getElementById('addClassBtn');
+        if (addClassButton) addClassButton.addEventListener('click', () => this.createWorkflowRecord('class'));
+
         // إغلاق القوائم المنسدلة عند النقر خارجها
         document.addEventListener('click', (e) => {
             this.handleOutsideClick(e);
@@ -824,6 +837,118 @@ class ProfessionalDashboard {
 
         // تحديث عنوان الصفحة
         this.updatePageTitle(page);
+        this.loadWorkflowPageData(page);
+    }
+
+    async loadWorkflowPageData(page) {
+        const api = window.api;
+        if (!api) return;
+        const loaders = {
+            classes: async () => {
+                const [classes, rooms] = await Promise.all([api.getClasses(), api.getRooms()]);
+                this.renderWorkflowTable('classesTableContainer', classes, ['title', 'trainer_name', 'room_name', 'capacity']);
+                this.renderWorkflowTable('roomsTableContainer', rooms, ['name', 'capacity', 'status']);
+                const roomsCount = document.getElementById('activeRoomsCount');
+                const classesCount = document.getElementById('todayClassesCount');
+                if (roomsCount) roomsCount.textContent = rooms.filter(room => room.status !== 'inactive').length;
+                if (classesCount) classesCount.textContent = classes.length;
+            },
+            equipment: async () => this.renderWorkflowTable('equipmentTableContainer', await api.getEquipment(), ['name', 'category', 'status', 'quantity']),
+            reports: async () => {
+                const reports = await api.getReports();
+                const revenue = document.getElementById('reportRevenueTotal');
+                const attendance = document.getElementById('reportAttendanceTotal');
+                const expiring = document.getElementById('reportExpiringTotal');
+                if (revenue) revenue.textContent = reports?.revenue ?? reports?.totalRevenue ?? 0;
+                if (attendance) attendance.textContent = reports?.attendance ?? reports?.totalAttendance ?? 0;
+                if (expiring) expiring.textContent = reports?.expiringSubscriptions ?? 0;
+                this.renderWorkflowTable('reportsStateContainer', Array.isArray(reports) ? reports : [], ['label', 'value']);
+            }
+        };
+        const load = loaders[page];
+        if (!load) return;
+        const containerIds = { classes: ['classesTableContainer', 'roomsTableContainer'], equipment: ['equipmentTableContainer'], reports: ['reportsStateContainer'] }[page] || [];
+        containerIds.forEach(id => this.renderWorkflowLoading(id));
+        try {
+            await load();
+        } catch (error) {
+            console.error(`Failed to load ${page} workflow`, error);
+            containerIds.forEach(id => this.renderWorkflowError(id, () => this.loadWorkflowPageData(page)));
+        }
+    }
+
+    async createWorkflowRecord(type) {
+        const prompts = {
+            room: ['اسم القاعة / Room name', 'السعة / Capacity'],
+            equipment: ['اسم المعدة / Equipment name', 'الحالة / Status'],
+            class: ['اسم الحصة / Class title', 'الجدول / Schedule']
+        };
+        const values = prompts[type].map(label => window.prompt(label));
+        if (!values[0]) return;
+        const api = window.api;
+        try {
+            this.showToast('جاري الحفظ / Saving...', 'info');
+            if (type === 'room') await api.saveRoom({ name: values[0], capacity: Number(values[1]) || 20, status: 'active' });
+            if (type === 'equipment') await api.saveEquipment({ name: values[0], status: values[1] || 'operational' });
+            if (type === 'class') await api.saveClass({ title: values[0], schedule: values[1] || null, status: 'active' });
+            this.showToast('تم الحفظ بنجاح / Saved successfully', 'success');
+            await this.loadWorkflowPageData(type === 'room' || type === 'class' ? 'classes' : 'equipment');
+        } catch (error) {
+            console.error(`Failed to save ${type}`, error);
+            this.showToast('تعذر الحفظ / Save failed', 'error');
+        }
+    }
+
+    async exportWorkflowReport() {
+        try {
+            this.showToast('جاري تجهيز التقرير / Preparing report...', 'info');
+            const report = await window.api.getReports();
+            const rows = [['Section', 'Date', 'Value']];
+            for (const [section, entries] of Object.entries(report || {})) {
+                (Array.isArray(entries) ? entries : []).forEach(entry => rows.push([section, entry.day || entry.end_date || '', entry.total || entry.name || '']));
+            }
+            const csv = rows.map(row => row.map(value => `"${String(value).replaceAll('"', '""')}"`).join(',')).join('\\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const anchor = document.createElement('a');
+            anchor.href = url;
+            anchor.download = `pulseforge-report-${new Date().toISOString().slice(0, 10)}.csv`;
+            anchor.click();
+            URL.revokeObjectURL(url);
+            this.showToast('تم تصدير التقرير / Report exported', 'success');
+        } catch (error) {
+            console.error('Failed to export workflow report', error);
+            this.showToast('تعذر تصدير التقرير / Export failed', 'error');
+        }
+    }
+
+    renderWorkflowLoading(containerId) {
+        const container = document.getElementById(containerId);
+        if (container) container.innerHTML = '<div class="dashboard-state"><i class="fas fa-spinner fa-spin"></i><strong>جاري التحميل / Loading</strong><span>يرجى الانتظار / Please wait</span></div>';
+    }
+
+    renderWorkflowError(containerId, retry) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        container.innerHTML = '<div class="dashboard-state is-error"><i class="fas fa-triangle-exclamation"></i><strong>تعذر تحميل البيانات / Unable to load data</strong><span>تحقق من الاتصال ثم أعد المحاولة / Check the connection and retry</span><button class="btn btn-outline" type="button">إعادة المحاولة / Retry</button></div>';
+        const button = container.querySelector('button');
+        if (button) button.addEventListener('click', retry, { once: true });
+    }
+
+    renderWorkflowTable(containerId, rows, fields) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        if (!Array.isArray(rows) || rows.length === 0) {
+            container.innerHTML = '<div class="dashboard-state"><i class="fas fa-inbox"></i><strong>لا توجد بيانات / No data</strong><span>لا توجد سجلات متاحة حالياً / No records are currently available</span></div>';
+            return;
+        }
+        const headers = fields.map(field => `<th>${field.replaceAll('_', ' ')}</th>`).join('');
+        const body = rows.slice(0, 100).map(row => `<tr>${fields.map(field => `<td>${this.escapeHtml(row?.[field] ?? '—')}</td>`).join('')}</tr>`).join('');
+        container.innerHTML = `<div class="table-responsive"><table class="data-table"><thead><tr>${headers}</tr></thead><tbody>${body}</tbody></table></div>`;
+    }
+
+    escapeHtml(value) {
+        return String(value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[character]));
     }
 
     updatePageTitle(page) {
