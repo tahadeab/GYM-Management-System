@@ -13,7 +13,7 @@
     "dist": "electron-builder",
     "dist:dir": "electron-builder --dir",
     "build": "electron-builder --dir",
-    "dist:win": "electron-builder --win nsis",
+    "dist:win": "electron-builder --win nsis --publish never",
     "setup": "node database/improved_db.js",
     "test": "jest --runInBand",
     "test:unit": "jest --testPathPattern=tests/unit --runInBand",
