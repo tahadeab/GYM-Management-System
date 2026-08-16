@@ -18,6 +18,9 @@ test("Electron opens the production Web build and preserves Web route behavior",
   await page.waitForURL(`http://127.0.0.1:${port}/`);
   assert.match(await page.title(), /Gym Management|PulseForge/i);
   assert.match(await page.locator("body").innerText(), /PulseForge|Dashboard|Loading|تسجيل|Login/i);
+  await page.evaluate(() => localStorage.setItem("gym-language", "en"));
+  await page.reload();
+  await page.waitForLoadState("domcontentloaded");
   const languageButton = page.getByRole("button", { name: /العربية|English/ }).last();
   if (await languageButton.isVisible().catch(() => false)) {
     await languageButton.click();

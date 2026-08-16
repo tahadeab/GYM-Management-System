@@ -75,7 +75,9 @@ async function createWindow() {
 
   const targetUrl = REMOTE_URL || await startLocalWebServer();
   await window.loadURL(targetUrl);
-  window.once("ready-to-show", () => window.show());
+  // Show after the document is loaded; ready-to-show can be delayed by GPU initialization.
+  window.show();
+  window.focus();
 }
 
 app.whenReady().then(async () => {
