@@ -1,142 +1,149 @@
-# PulseForge Gym Management Desktop
+# PulseForge Gym Management Web
 
-> **Important:** This repository is the legacy Electron/Desktop application. Its `npm run web` command is only a static UI inspection server and is not the modern React web dashboard. If that command shows a welcome message with one button, the behavior is expected for this legacy repository. The full web dashboard is maintained separately at [`tahadeab/Gym-Management-Web`](https://github.com/tahadeab/Gym-Management-Web).
+> **Important:** This is the modern React/tRPC web application. It is different from the legacy Electron repository [`GYM-Management-System`](https://github.com/tahadeab/GYM-management-system), whose `npm run web` command only serves a small static inspection page. If you see a page with one welcome button, you launched the legacy repository rather than this application.
 
-PulseForge Gym Management Desktop is a privacy-first Electron application for gyms, fitness studios, sports clubs, and multi-branch operations. It stores operational data locally in SQLite and provides bilingual staff workflows for members, subscriptions, payments, attendance, trainers, classes, equipment, reports, exports, and notifications.
+PulseForge Gym Management is a production-oriented bilingual gym operations platform for staff and administrators. It combines a responsive React dashboard, a database-backed TypeScript API, financial reporting, member and subscription lifecycle management, class bookings, attendance, trainer management, personal training, and an installable Progressive Web App (PWA).
 
-The application supports **English/LTR** and **Arabic/RTL**. The selected language is persisted locally and restored on the next launch.
+The product supports **English with LTR layout** and **Arabic with RTL layout**. The selected language is persisted in the browser and can be changed without a page reload. The same backend can also serve the companion Expo mobile application.
 
-## Capabilities
+## Product scope
 
-| Area | Included capabilities |
+| Module | Included capabilities |
 |---|---|
-| Access control | Password hashing, admin/staff roles, session-aware IPC, and controlled renderer access |
-| Members | Profiles, contact and emergency details, medical notes, status, search, and filtering |
-| Subscriptions | New subscriptions, renewals, expiry tracking, and payment-linked updates |
-| Payments | Payment history, methods, revenue metrics, and staff ownership controls |
-| Attendance | Check-in/check-out, activity type, notes, latest visits, and reporting |
-| Trainers | Profiles, specialties, contact data, active status, and relationship views |
-| Classes | Scheduling, trainer assignment, capacity, pricing, and member bookings |
-| Equipment | Inventory, purchase information, status, maintenance dates, notes, and admin controls |
-| Reports | Revenue trends, attendance trends, subscription expiry indicators, and export foundation |
-| Interface | Responsive desktop layout, bilingual labels, RTL/LTR switching, dark-mode assets, and toast feedback |
+| Dashboard | Member count, active subscriptions, daily revenue, attendance, expiring subscriptions, revenue trends, and payment mix |
+| Members | Search, status filtering, create, edit, archive, subscription-status visibility, and XLSX export |
+| Subscriptions | Monthly plans, create, renew, freeze, unfreeze, expired/cancelled states, and date-based lifecycle tracking |
+| Financial reports | Date-range revenue reports, daily/weekly/monthly aggregation, payment-method analysis, plan analysis, and XLSX export |
+| Classes and bookings | Trainer assignment, schedule, capacity, price, booking, and scoped booking cancellation |
+| Attendance | Check-in, check-out, activity type, and date-range reporting |
+| Trainers | Trainer list, specialty and contact data, class relationships, and PT relationships |
+| Personal training | Packages, member assignments, scheduled sessions, completion tracking, and status lifecycle |
+| PWA | Web manifest, install metadata, responsive layout, and offline-safe application shell; API responses are not cached |
 
-## Technology and security model
+## Technology
 
-The application uses Electron 37, Node.js, SQLite3, bcryptjs, Chart.js, jsPDF, XLSX, DOMPurify, Jest, and Playwright. The renderer runs with `nodeIntegration: false` and `contextIsolation: true`; renderer actions communicate through the controlled preload bridge. The SQLite database is created in Electron's operating-system user-data directory rather than inside the repository.
+| Layer | Technology |
+|---|---|
+| Web UI | React 19, Vite, Tailwind CSS 4, shadcn/ui, Recharts |
+| API | Express 4, tRPC 11, TypeScript, Zod |
+| Database | MySQL/TiDB with Drizzle ORM |
+| Authentication | Manus OAuth session cookies and compatible Bearer session headers |
+| Export | XLSX workbook generation |
+| Mobile companion | Expo SDK 57, React Native 0.86, React Navigation |
+| Testing | Vitest and TypeScript compiler checks |
 
 ## Requirements
 
-Install Node.js 20 or newer and npm. The application targets Windows, macOS, and Linux. For a small single-site installation, at least 4 GB RAM and 500 MB free disk space are recommended.
+Use Node.js 20 or newer and pnpm 10. A MySQL or TiDB database is required for protected business data. Never commit credentials, session tokens, exported member information, `.env` files, database dumps, or customer data.
 
-## Installation
+The managed environment supplies platform variables such as `DATABASE_URL`, `JWT_SECRET`, `VITE_APP_ID`, `OAUTH_SERVER_URL`, `VITE_OAUTH_PORTAL_URL`, `OWNER_OPEN_ID`, and the built-in service configuration. For an independent deployment, provide equivalent values through the hosting provider's secret manager rather than hardcoding them.
 
-```bash
-git clone https://github.com/tahadeab/GYM-Management-System.git
-cd GYM-Management-System
-npm install
-```
-
-For first-run configuration, copy `.env.example` to `.env` when the file is available and set `ADMIN_PASSWORD` to a strong private password. If no password is supplied, the database may create a temporary random administrator password and print a warning; change it immediately after first login. Never commit `.env`, database files, backups, generated reports, or customer data.
-
-## Running
+## Local development
 
 ```bash
-npm start
-```
-
-For a quick static UI inspection only:
-
-```bash
-npm run web
-```
-
-The `web` command serves the legacy repository's static files on port 8080 and is intentionally not the full web application. On Windows, if Python is not installed, the fallback command may use the Python Microsoft Store alias and still serve the existing static files; this does not install or launch the modern web dashboard. To run the full web dashboard, clone [`tahadeab/Gym-Management-Web`](https://github.com/tahadeab/Gym-Management-Web), install pnpm, and run `pnpm install` followed by `pnpm dev`.
-
-## Windows PowerShell troubleshooting
-
-Use `Get-Location` and `Get-ChildItem` first to confirm which repository is open. If the path is `GYM-Management-System`, you are in the legacy Electron/Desktop project. Running `npm run web` there intentionally serves a small static inspection page on port 8080; a welcome message with one button is not the modern dashboard.
-
-```powershell
-# Legacy Electron/Desktop app
-cd D:\path\to\GYM-Management-System
-npm install
-npm start
-
-# Modern React Web/PWA app
-cd D:\path\to\Gym-Management-Web
+git clone https://github.com/tahadeab/Gym-Management-Web.git
+cd Gym-Management-Web
 pnpm install
+pnpm check
+pnpm test
 pnpm dev
 ```
 
-If PowerShell reports `Python was not found`, Windows could not resolve the `python3` command used by the legacy static-server fallback. This warning does not indicate that Electron or the modern web application is installed incorrectly. Stop the static server with `Ctrl+C`, switch to `Gym-Management-Web`, and run `pnpm dev`. Install Python only if you specifically need the legacy static inspection command.
+The development server prints the local URL when it starts. The default application entry is the dashboard. Authentication and protected queries require a configured session and database. On Windows PowerShell, use the same commands from the project directory; do not run `npm run web`, because that command belongs to the legacy Electron repository.
 
-## Testing and quality checks
+For the legacy desktop application, use [`tahadeab/GYM-management-system`](https://github.com/tahadeab/GYM-management-system), run `npm install`, and then `npm start`. For the full modern web dashboard, use this repository and run `pnpm dev`.
 
-```bash
-npm test
-npm run test:unit
-npm run test:integration
-npm run test:e2e
-npm run check
-npm run lint
-npm run test:coverage
-```
+## Windows PowerShell troubleshooting
 
-Jest runs the unit and integration JavaScript tests. Playwright tests use the dedicated `test:e2e` command. The syntax check validates the main process, preload bridge, database code, and script files. The complete bilingual user manual is available at [`docs/USER_GUIDE.md`](docs/USER_GUIDE.md).
+If `npm run web` opens a nearly empty page with a welcome message and one button, inspect the current folder with `Get-Location` and `Get-ChildItem`. You are probably inside the legacy `GYM-Management-System` Electron repository. That repository's `npm run web` command only serves its static inspection files on port 8080; it does not launch the modern React dashboard.
 
-## Data, export, and backup
-
-Use the application export action to create a JSON backup before upgrades or migrations. Store backups outside the application directory and test restoration periodically. Do not place real customer records in GitHub or issue trackers. Production installations should use signed installers, encrypted backups, a private environment file, and a documented restore test.
-
-## Project layout
-
-```text
-main.js                       Electron main process and IPC handlers
-preload.js                    Secure renderer API bridge
-database/improved_db.js       SQLite schema, business logic, RBAC, and reporting
-frontend/                     Login and dashboard pages
-scripts/                      UI controllers and bilingual runtime
-styles/                       Page styles and language-switcher styles
-assets/                       Branding and interface assets
-tests/                        Unit, integration, and Playwright tests
-docs/USER_GUIDE.md            Complete bilingual user guide
-docs/DESKTOP_PARITY_AUDIT.md  Verified desktop/web feature parity matrix
-```
-
-## Release procedure and installer packaging
-
-The repository uses `electron-builder` to package the desktop application. The configured Windows target is an NSIS installer with a selectable installation directory, Start Menu shortcut, and Desktop shortcut.
+Use the following commands to launch the intended application:
 
 ```powershell
+# Modern React Web/PWA dashboard
+cd D:\path\to\Gym-Management-Web
+pnpm install
+pnpm dev
+
+# Legacy Electron desktop application
+cd D:\path\to\GYM-Management-System
 npm install
-npm run check
-npm test
-npm run build
-npm run dist:win
+npm start
 ```
 
-`npm run dist:dir` creates the verified unpacked Linux artifact under `release/linux-unpacked/` for local packaging verification. The Windows NSIS installer was successfully built by GitHub Actions on `windows-latest` and published in Release `v1.0.1`. Download it from [PulseForge-Gym-Management-Setup-1.0.0.exe](https://github.com/tahadeab/GYM-Management-System/releases/download/v1.0.1/PulseForge-Gym-Management-Setup-1.0.0.exe). The workflow runs tests and validation, builds the installer, uploads the Actions artifact, and attaches the EXE to the GitHub Release. The desktop script uses `--publish never` so electron-builder only builds the installer; the dedicated release step performs GitHub publishing. Cross-building from Linux requires a working Wine environment and may fail during installer validation. The installer currently uses the default Electron icon; add a reviewed `.ico` asset before a future branded icon update.
+The message `Python was not found; run without arguments to install from the Microsoft Store` means Windows could not find `python3`. The fallback `python -m http.server 8080` may still start through a Windows execution-alias or another available Python command, but it only serves the legacy static page. It is unrelated to the modern web server. Close the old server with `Ctrl+C`, switch to the modern web repository, and run `pnpm dev` instead.
 
-## Final verification notes
+## Production build
 
-The final validation completed the JavaScript syntax check and all 65 Jest tests locally after rebuilding the native SQLite binding; the GitHub Windows job also passed its tests, JavaScript validation, NSIS build, artifact upload, and Release publication. Release `v1.0.1` contains the verified Windows installer. The test environment correctly reports a security warning when `ADMIN_PASSWORD` is absent and generates a temporary administrator password for development. Production operators must set a strong private `ADMIN_PASSWORD` before first launch and change any temporary password immediately. The web and mobile projects have separate README files and MIT licenses, while mobile bearer-token entry and native push notification delivery remain transitional deployment concerns described in the mobile documentation.
+```bash
+pnpm build
+pnpm start
+```
+
+The build creates the Vite client bundle and bundles the Express/tRPC server. Use a managed secret store in production, enable database TLS where supported, and run a reviewed migration process before changing the schema.
+
+## Database workflow
+
+The database schema is defined in `drizzle/schema.ts`, query helpers live in `server/db.ts`, and tRPC procedures are defined in `server/routers.ts`. For a schema change, update the Drizzle schema, generate the migration, review the generated SQL, apply it through the controlled migration workflow, and then verify the affected queries and UI. Avoid destructive production SQL without a verified backup and rollback plan.
+
+## Authentication and API
+
+Browser authentication uses the OAuth callback and a secure session cookie. Protected procedures are guarded on the server; the client consumes them through the typed tRPC client under `/api/trpc`. The server also accepts a valid signed session token in `Authorization: Bearer <token>`, which is used by the companion mobile application. A mobile token must be issued by the approved authentication gateway and must be short-lived and rotated according to the gym's security policy.
+
+## PWA installation and offline behavior
+
+Serve the application over HTTPS, open it in a supported browser, and choose **Install app** or **Add to Home Screen**. The project exposes `/manifest.webmanifest` and `/sw.js`. The service worker protects the application shell for repeat visits but deliberately excludes `/api/` and tRPC responses from caching so that memberships, payments, attendance, bookings, and reports are not served from stale business data.
+
+## Mobile companion
+
+The separate project at `/home/ubuntu/gym-management-mobile` is an Expo/React Native application using the same backend. It includes dashboard, members, subscriptions, classes, personal training, attendance, and notification views. Notification rows are currently derived from active subscriptions approaching their end date; native push delivery is a separate deployment feature.
+
+```bash
+cd ../gym-management-mobile
+npm install
+EXPO_PUBLIC_API_URL=https://YOUR-GYM-DOMAIN npm start
+```
+
+The mobile connection panel stores the short-lived session token under `pulseforge-session-token` in AsyncStorage. For production, replace manual token entry with the organization's approved mobile OAuth or token-exchange flow and use secure device storage.
+
+## Verification commands
+
+Run the web checks from this repository:
+
+```bash
+pnpm check
+pnpm test -- --run
+```
+
+Run the mobile TypeScript check:
+
+```bash
+cd ../gym-management-mobile
+npx tsc --noEmit
+```
+
+The desktop Electron project has its own verification commands documented in its repository. A release should also include browser verification of login, language switching, member CRUD, subscription lifecycle actions, reports, bookings, attendance, and PWA installation metadata.
+
+## Repository layout
+
+```text
+client/                 React pages, components, styles, and PWA entry files
+drizzle/                Database schema and migration metadata
+server/                 Database helpers, tRPC routers, authentication, and tests
+shared/                 Shared constants and types
+storage/                Storage helpers
+todo.md                 Feature history and release verification record
+```
+
+## Engineering and security rules
+
+All protected business procedures must remain behind authentication and administrative mutations must preserve server-side role checks. Keep file bytes in object storage rather than database columns. Do not cache API responses in the service worker. Validate all dates and numeric inputs at the API boundary. Before submitting a change, run the type check and test suite, update both language variants, and document any new environment variable.
 
 ## Arabic summary
 
-PulseForge Gym Management Desktop هو تطبيق سطح مكتب احترافي مبني على Electron وNode.js وSQLite لإدارة الجيم. يدعم الأعضاء والاشتراكات والمدفوعات والحضور والمدربين والحصص والمعدات والتقارير والتصدير والتنبيهات، مع دعم كامل للعربية باتجاه RTL والإنجليزية باتجاه LTR.
+PulseForge Gym Management هو نظام احترافي لإدارة الجيم مبني على React وTypeScript وtRPC وقاعدة بيانات MySQL/TiDB. يدعم إدارة الأعضاء والاشتراكات والمدفوعات والتقارير المالية وتصدير XLSX والحضور والمدربين والحصص والحجوزات والتدريب الشخصي من خلال لوحة تحكم متجاوبة.
 
-تُخزن قاعدة البيانات محلياً داخل مجلد بيانات Electron، ويجب إجراء نسخ احتياطية واختبار استعادتها قبل أي ترقية. يحتوي مجلد `docs` على دليل استخدام ثنائي اللغة.
-
-## Related modern applications
-
-| Application | Repository | Correct local command |
-|---|---|---|
-| Legacy Electron/Desktop | [`GYM-management-system`](https://github.com/tahadeab/GYM-management-system) | `npm start` |
-| Modern React Web/PWA | [`Gym-Management-Web`](https://github.com/tahadeab/Gym-Management-Web) | `pnpm dev` |
-| Expo Mobile companion | [`gym-management-mobile`](https://github.com/tahadeab/gym-management-mobile) | `npx expo start` |
-
-Do not run `npm run web` from this repository when you expect the full React dashboard; it is only a static inspection command.
+يدعم النظام **اللغة الإنجليزية باتجاه LTR واللغة العربية باتجاه RTL** مع حفظ اختيار اللغة. كما يمكن تثبيت نسخة الويب كتطبيق PWA، ويوجد تطبيق Expo مستقل للموبايل يتصل بنفس الخادم باستخدام `EXPO_PUBLIC_API_URL` ورمز جلسة Bearer صالح.
 
 ## License
 
@@ -146,8 +153,10 @@ This project is distributed under the MIT License. See [`LICENSE`](./LICENSE).
 
 Maintained by **taha deab**.
 
-<!-- Desktop UI and installer enhancement work is tracked in the active project plan. -->
+## Desktop application from the Web build
 
-### Inline form draft recovery
+The desktop application is now a thin Electron shell around this same `gym-management-web` application. It does not use the legacy Electron dashboard UI. Electron starts the production web server from `dist/index.js` on a local loopback port and opens that exact Web interface in a desktop window, preserving the Web dashboard, Arabic/English switching, RTL/LTR behavior, theme controls, route structure, and server-backed data flows.
 
-The room, class, and equipment forms use debounced renderer-side draft autosave. Drafts are stored locally under `pulseforge.workflowDraft.room`, `pulseforge.workflowDraft.class`, and `pulseforge.workflowDraft.equipment`. When a form is reopened, non-empty fields are restored and the bilingual status indicator shows `Draft restored / تم استرجاع المسودة`. Successful saves show `Draft autosaved / تم حفظ المسودة تلقائياً`; reset and successful submission clear the corresponding draft. The behavior is covered by the dashboard state tests, including persistence and restoration for all three forms.
+Use `pnpm desktop:dev` to build the Web application and open it in Electron during development. Use `pnpm desktop:dir` to create an unpacked desktop build for local verification. On Windows, use `pnpm desktop:win` to generate `PulseForge-Gym-Management-Setup-<version>.exe` through electron-builder. The command disables implicit GitHub publishing; CI or a manual GitHub Release step should publish the resulting installer.
+
+For a deployed Web backend, set `PULSEFORGE_WEB_URL` before launching Electron. Without that variable, Electron starts the bundled production Web server locally. Authentication remains the Web application's authentication flow; the desktop shell does not bypass or replace it.

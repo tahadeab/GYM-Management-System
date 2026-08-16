@@ -1,0 +1,18 @@
+{
+  "name": "PulseForge Gym Management",
+  "short_name": "PulseForge",
+  "description": "Bilingual gym operations dashboard for members, subscriptions, classes, attendance, and personal training.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f7fb",
+  "theme_color": "#ff6b22",
+  "orientation": "portrait-primary",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["business", "fitness", "productivity"],
+  "shortcuts": [
+    { "name": "Dashboard", "short_name": "Dashboard", "url": "/" },
+    { "name": "Members", "short_name": "Members", "url": "/?section=members" },
+    { "name": "Classes", "short_name": "Classes", "url": "/?section=classes" }
+  ]
+}
